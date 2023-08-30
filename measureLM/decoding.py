@@ -24,11 +24,11 @@ def encode(texts, tokenizer, model):
     return output, tokens
 
 
-def ids_to_tokens(scores, topk=5):
+def topK_scores(scores, tokenizer, topk=5):
     pred_scores, pred_tokens = [], []
     topK_preds = torch.topk(scores, k=topk)
     for scores, indices in zip(topK_preds.values.tolist(), topK_preds.indices.tolist()):
-        scores = list(map(lambda score: round(score, 2), scores))
+        scores = list(map(lambda score: round(score,2), scores))
         pred_scores.append(scores)
         tokens = list(map(lambda idx: tokenizer.convert_ids_to_tokens(idx), indices))
         pred_tokens.append(tokens)
@@ -44,12 +44,21 @@ def decode(h, model):
 
 
 def early_decoding(hidden_states, tok_idx, model, l_start_end=[0, 99]):
+    layer_scores = []
     for i, h in enumerate(hidden_states[l_start_end[0]:l_start_end[1]]):
         h = h[tok_idx]  ## get hidden states per token
         scores = decode(h, model)  ## decode the hidden state through last layer
-        tokens, scores = ids_to_tokens(scores, topk=2)
-        print(f"layer {i}: {list(zip(scores, tokens))}")
+        layer_scores.append(scores)
+    return layer_scores
 
+
+def scores_to_tokens(layer_scores, tokenizer, mode=2):
+    for i, scores in enumerate(layer_scores):
+        if isinstance(mode, int):
+            tokens, scores = topK_scores(scores, tokenizer, topk=mode)
+            print(f"layer {i}: {list(zip(scores, tokens))}")
+        elif isinstance(mode, str):
+            pass
 
 
 if __name__ == "__main__":
@@ -63,7 +72,8 @@ if __name__ == "__main__":
     texts = ["Hi, how are", "The capital of France is"]
     output, tokens = encode(texts, tokenizer, model)
     tok_idx = token_select(tokens, tokenizer, select_token=None)
-    early_decoding(output.hidden_states, tok_idx, model)
+    layer_scores = early_decoding(output.hidden_states, tok_idx, model)
+    scores_to_tokens(layer_scores, tokenizer, mode=2)
 
     ## encoder-only model____________
     tokenizer = AutoTokenizer.from_pretrained("lsanochkin/deberta-large-feedback")
@@ -72,4 +82,5 @@ if __name__ == "__main__":
     texts = ["Hi, how are [MASK]", "The capital of France is [MASK]"]
     output, tokens = encode(texts, tokenizer, model)
     tok_idx = token_select(tokens, tokenizer, select_token="[MASK]")
-    early_decoding(output.hidden_states, tok_idx, model)
+    layer_scores = early_decoding(output.hidden_states, tok_idx, model)
+    scores_to_tokens(layer_scores, tokenizer, mode=2)
