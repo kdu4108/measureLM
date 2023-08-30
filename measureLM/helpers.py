@@ -10,3 +10,7 @@ matplotlib.rcParams['axes.spines.top'] = False
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 DEVICE="GPU"
+
+
+if __name__ == "__main__":
+    pass
