@@ -24,19 +24,8 @@ def encode(texts, tokenizer, model):
     return output, tokens
 
 
-def topK_scores(scores, tokenizer, topk=5):
-    pred_scores, pred_tokens = [], []
-    topK_preds = torch.topk(scores, k=topk)
-    for scores, indices in zip(topK_preds.values.tolist(), topK_preds.indices.tolist()):
-        scores = list(map(lambda score: round(score,2), scores))
-        pred_scores.append(scores)
-        tokens = list(map(lambda idx: tokenizer.convert_ids_to_tokens(idx), indices))
-        pred_tokens.append(tokens)
-    return pred_tokens, pred_scores
-
-
 def decode(h, model):
-    if model.can_generate(): ## decoder-only
+    if model.can_generate():  ## decoder-only
         scores = model.lm_head(h)
     else:  ## encoder-only
         scores = model.cls(h)
@@ -49,16 +38,35 @@ def early_decoding(hidden_states, tok_idx, model, l_start_end=[0, 99]):
         h = h[tok_idx]  ## get hidden states per token
         scores = decode(h, model)  ## decode the hidden state through last layer
         layer_scores.append(scores)
-    return layer_scores
+
+    layer_scores = torch.stack(layer_scores)
+    layer_scores = torch.swapaxes(layer_scores, 0, 1)
+    return layer_scores  ## dims: (data examples, layers, token_scores)
+
+
+def topK_scores(scores, tokenizer, topk=5):
+    pred_scores, pred_tokens = [], []
+    topK_preds = torch.topk(scores, k=topk)
+
+    scores = topK_preds.values.tolist()
+    indices = topK_preds.indices.tolist()
+    # for scores, indices in zip(topK_preds.values.tolist(), topK_preds.indices.tolist()):
+    scores = list(map(lambda score: round(score, 2), scores))
+    pred_scores.append(scores)
+    tokens = list(map(lambda idx: tokenizer.convert_ids_to_tokens(idx), indices))
+    pred_tokens.append(tokens)
+    return pred_tokens, pred_scores
 
 
 def scores_to_tokens(layer_scores, tokenizer, mode=2):
-    for i, scores in enumerate(layer_scores):
-        if isinstance(mode, int):
-            tokens, scores = topK_scores(scores, tokenizer, topk=mode)
-            print(f"layer {i}: {list(zip(scores, tokens))}")
-        elif isinstance(mode, str):
-            pass
+    for e, example in enumerate(layer_scores):
+        print(f"\nexample {e}")
+        for l, scores in enumerate(example):
+            if isinstance(mode, int):
+                tokens, scores = topK_scores(scores.detach(), tokenizer, topk=mode)
+                print(f"layer {l}: {list(zip(scores, tokens))}")
+            elif isinstance(mode, str):
+                pass
 
 
 if __name__ == "__main__":
