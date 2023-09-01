@@ -1,4 +1,5 @@
 import torch
+from measureLM import visualizing
 
 def token_select(tokens, tokenizer, select_token="[MASK]"):  # "Ġhi"
     if select_token is not None:
@@ -41,7 +42,7 @@ def early_decoding(hidden_states, tok_idx, model, l_start_end=[0, 99]):
 
     layer_scores = torch.stack(layer_scores)
     layer_scores = torch.swapaxes(layer_scores, 0, 1)
-    return layer_scores  ## dims: (data examples, layers, token_scores)
+    return layer_scores  ## dims: (prompts, layers, token_scores)
 
 
 def topK_scores(scores, tokenizer, topk=5):
@@ -58,15 +59,44 @@ def topK_scores(scores, tokenizer, topk=5):
     return pred_tokens, pred_scores
 
 
-def scores_to_tokens(layer_scores, tokenizer, mode=2):
-    for e, example in enumerate(layer_scores):
-        print(f"\nexample {e}")
-        for l, scores in enumerate(example):
-            if isinstance(mode, int):
-                tokens, scores = topK_scores(scores.detach(), tokenizer, topk=mode)
-                print(f"layer {l}: {list(zip(scores, tokens))}")
-            elif isinstance(mode, str):
-                pass
+def get_token_rank(scores, tokenizer, token, space="Ġ"):
+    if space is not None:
+        token = "Ġ" + token
+    token_id = tokenizer.convert_tokens_to_ids(token)
+    token_ranks = torch.argsort(scores, descending=True)
+
+    token_scores = scores[token_ranks]
+    token_rank = torch.where(token_ranks == token_id)[0].item()
+    token_score = token_scores[token_rank]
+    token_rank = round(1 / (token_rank + 1), 4)  # round(1-(token_rank / len(scores)), 4)
+    return token_rank, token_score
+
+
+def scores_to_tokens(layer_scores, tokenizer, mode=2, print_res=True):
+    prompt_layer_res = {}
+    for idx, prompt in enumerate(layer_scores):
+        print(f"\nprompt {idx}")
+        layer_res = {}
+        for l, scores in enumerate(prompt):
+            if isinstance(mode, int):  ## get top tokens
+                tokens, scores = topK_scores(scores, tokenizer, topk=mode)
+                layer_res[l] = list(zip(scores, tokens))
+                if print_res:
+                    print(f"layer {l}: {layer_res[l]}")
+
+            elif isinstance(mode, list):  ## search specific tokens
+                if isinstance(mode[0], list) and len(mode) == len(layer_scores):
+                    pass  ## per prompt mode
+                elif isinstance(mode[0], str):
+                    token_ranks, token_scores = [], []
+                    for token in mode:
+                        token_rank, token_score = get_token_rank(scores, tokenizer, token)
+                        token_ranks.append(token_rank)
+                    layer_res[l] = token_ranks
+                    if print_res:
+                        print(f"layer {l}: {list(zip(layer_res[l], mode))}")
+        prompt_layer_res[idx] = layer_res
+    return prompt_layer_res
 
 
 if __name__ == "__main__":
@@ -77,18 +107,24 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained('gpt2-medium')
     model = AutoModelForCausalLM.from_pretrained('gpt2-medium')
 
-    texts = ["Hi, how are", "The capital of France is"]
-    output, tokens = encode(texts, tokenizer, model)
-    tok_idx = token_select(tokens, tokenizer, select_token=None)
+    token_candidates = ["Paris", "France", "Germany"]
+    prompts = ["Paris is the capital of", "The capital of France is"]
+
+    output, tokens = encode(prompts, tokenizer, model)
+    tok_idx = token_select(tokens, tokenizer)
     layer_scores = early_decoding(output.hidden_states, tok_idx, model)
-    scores_to_tokens(layer_scores, tokenizer, mode=2)
+    scored_tokens = scores_to_tokens(layer_scores, tokenizer, mode=token_candidates)
+    visualizing.visualize_token_ranks(scored_tokens, token_candidates, prompts)
 
     ## encoder-only model____________
     tokenizer = AutoTokenizer.from_pretrained("lsanochkin/deberta-large-feedback")
     model = DebertaForMaskedLM.from_pretrained("lsanochkin/deberta-large-feedback")
 
-    texts = ["Hi, how are [MASK]", "The capital of France is [MASK]"]
-    output, tokens = encode(texts, tokenizer, model)
-    tok_idx = token_select(tokens, tokenizer, select_token="[MASK]")
+    token_candidates = ["Paris", "France", "Germany"]
+    prompts = ["Paris is the capital of [MASK]", "The capital of France is [MASK]"]
+
+    output, tokens = encode(prompts, tokenizer, model)
+    tok_idx = token_select(tokens, tokenizer)
     layer_scores = early_decoding(output.hidden_states, tok_idx, model)
-    scores_to_tokens(layer_scores, tokenizer, mode=2)
+    scored_tokens = scores_to_tokens(layer_scores, tokenizer, mode=token_candidates)
+    visualizing.visualize_token_ranks(scored_tokens, token_candidates, prompts)
