@@ -1,21 +1,7 @@
 import torch
 from measureLM import visualizing
 
-def token_select(tokens, tokenizer, select_token="[MASK]"):  # "Ġhi"
-    if select_token is not None:
-        select_token_id = tokenizer.convert_tokens_to_ids(select_token)  ## retrieve index of [MASK]
-        batch_idx, seq_idx = (tokens.input_ids == select_token_id).nonzero(as_tuple=True)
-
-    if select_token is None or select_token not in tokenizer.vocab:  ## get last token before padding
-        batch_idx, seq_idx = (tokens.input_ids != tokenizer.pad_token_id).nonzero(as_tuple=True)
-        batch_idx, unique_batch_counts = torch.unique_consecutive(batch_idx, return_counts=True)
-        unique_batch_cumsum = torch.cumsum(unique_batch_counts, dim=0) - 1
-        seq_idx = seq_idx[unique_batch_cumsum]
-
-    assert batch_idx.shape[0] > 0, f"mlm-type model and {select_token} token not in prompt text"
-    batch_seq_idx = (batch_idx, seq_idx)
-    return batch_seq_idx
-
+## ENCODING and DECODING____________________________
 
 def encode(texts, tokenizer, model):
     if tokenizer.pad_token is None:  ## some tokenizers do not have pad tokens
@@ -33,16 +19,34 @@ def decode(h, model):
     return scores
 
 
-def early_decoding(hidden_states, tok_idx, model, l_start_end=[0, 99]):
+def early_decoding(hidden_states, model, l_start_end=[0, 99]):
     layer_scores = []
     for i, h in enumerate(hidden_states[l_start_end[0]:l_start_end[1]]):
-        h = h[tok_idx]  ## get hidden states per token
         scores = decode(h, model)  ## decode the hidden state through last layer
         layer_scores.append(scores)
 
     layer_scores = torch.stack(layer_scores)
     layer_scores = torch.swapaxes(layer_scores, 0, 1)
-    return layer_scores  ## dims: (prompts, layers, token_scores)
+    layer_scores = torch.swapaxes(layer_scores, 1, 2)
+    return layer_scores  ## dims: (prompts, tokens, layers, token_scores)
+
+
+## SCORING____________________________
+
+def token_select(tokens, tokenizer, select_token="[MASK]"):  # "Ġhi"
+    if select_token is not None:
+        select_token_id = tokenizer.convert_tokens_to_ids(select_token)  ## retrieve index of [MASK]
+        batch_idx, seq_idx = (tokens.input_ids == select_token_id).nonzero(as_tuple=True)
+
+    if select_token is None or select_token not in tokenizer.vocab:  ## get last token before padding
+        batch_idx, seq_idx = (tokens.input_ids != tokenizer.pad_token_id).nonzero(as_tuple=True)
+        batch_idx, unique_batch_counts = torch.unique_consecutive(batch_idx, return_counts=True)
+        unique_batch_cumsum = torch.cumsum(unique_batch_counts, dim=0) - 1
+        seq_idx = seq_idx[unique_batch_cumsum]
+
+    assert batch_idx.shape[0] > 0, f"mlm-type model and {select_token} token not in prompt text"
+    batch_seq_idx = (batch_idx, seq_idx)
+    return batch_seq_idx
 
 
 def topK_scores(scores, tokenizer, topk=5):
@@ -98,7 +102,6 @@ def scores_to_tokens(layer_scores, tokenizer, mode=2, print_res=True):
         prompt_layer_res[idx] = layer_res
     return prompt_layer_res
 
-
 if __name__ == "__main__":
 
     from transformers import AutoModelForCausalLM, DebertaForMaskedLM, AutoTokenizer
@@ -110,11 +113,15 @@ if __name__ == "__main__":
     token_candidates = ["Paris", "France", "Germany"]
     prompts = ["Paris is the capital of", "The capital of France is"]
 
+    ## encoding
     output, tokens = encode(prompts, tokenizer, model)
+    layer_scores = early_decoding(output.hidden_states, model)
+
+    ## scoring
     tok_idx = token_select(tokens, tokenizer)
-    layer_scores = early_decoding(output.hidden_states, tok_idx, model)
-    scored_tokens = scores_to_tokens(layer_scores, tokenizer, mode=token_candidates)
+    scored_tokens = scores_to_tokens(layer_scores[tok_idx], tokenizer, mode=token_candidates)
     visualizing.visualize_token_ranks(scored_tokens, token_candidates, prompts)
+
 
     ## encoder-only model____________
     tokenizer = AutoTokenizer.from_pretrained("lsanochkin/deberta-large-feedback")
@@ -123,8 +130,11 @@ if __name__ == "__main__":
     token_candidates = ["Paris", "France", "Germany"]
     prompts = ["Paris is the capital of [MASK]", "The capital of France is [MASK]"]
 
+    ## encoding
     output, tokens = encode(prompts, tokenizer, model)
+    layer_scores = early_decoding(output.hidden_states, model)
+
+    ## scoring
     tok_idx = token_select(tokens, tokenizer)
-    layer_scores = early_decoding(output.hidden_states, tok_idx, model)
-    scored_tokens = scores_to_tokens(layer_scores, tokenizer, mode=token_candidates)
+    scored_tokens = scores_to_tokens(layer_scores[tok_idx], tokenizer, mode=token_candidates)
     visualizing.visualize_token_ranks(scored_tokens, token_candidates, prompts)
