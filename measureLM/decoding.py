@@ -28,8 +28,11 @@ def early_decoding(activs, model, l_start_end=[0, 99]):
     layer_scores = []
     for layer in range(l_start_end[0], l_start_end[1]):
         if layer < model.cfg.n_layers:
-            hidden_name = transformer_lens.utils.get_act_name("resid_post", layer)
-            h = activs[hidden_name]
+            if isinstance(activs, transformer_lens.ActivationCache):
+                hidden_name = transformer_lens.utils.get_act_name("resid_post", layer)
+                h = activs[hidden_name]
+            elif isinstance(activs, torch.FloatTensor):
+                h = activs[...,layer,:]
             scores = decode(h, model)  ## decode the hidden state through last layer
             layer_scores.append(scores)
 
