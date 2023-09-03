@@ -9,10 +9,12 @@ model.tokenizer.pad_token = model.tokenizer.eos_token
 
 ## ENCODING and DECODING____________________________
 
-def encode(texts, model):
+def encode(texts, model, tokens_only=False):
     if model.tokenizer.pad_token is None:  ## some tokenizers do not have pad tokens
         model.tokenizer.pad_token = model.tokenizer.eos_token
     tokens = model.to_tokens(texts, prepend_bos=False)
+    if tokens_only:
+        return tokens
     logits, activs = model.run_with_cache(tokens)
     return logits, activs, tokens
 
