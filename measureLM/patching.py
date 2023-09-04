@@ -7,10 +7,28 @@ from transformer_lens.hook_points import (
 )
 
 
-def patch_mlp_out(mlp_out_new, hook: HookPoint, old_activs: torch.Tensor, extract_tok_idx, insert_tok_idx=None):
+def create_hook_mapping(model, extract_l=(0, 40), patch_l=(0, 40), hook_type="mlp_out"):
+    if isinstance(extract_l, tuple):
+        extract_l = list(range(*extract_l))
+    if isinstance(patch_l, tuple):
+        patch_l = list(range(*patch_l))
+
+    if len(extract_l) < len(patch_l):
+        extract_l = extract_l + ([extract_l[-1]] * (len(patch_l) - len(extract_l)))
+
+    extract_l[:] = [x for x in extract_l if x < model.cfg.n_layers]
+    patch_l[:] = [x for x in patch_l if x < model.cfg.n_layers]
+
+    extract_l = [transformer_lens.utils.get_act_name(hook_type, l) for l in extract_l]
+    patch_l = [transformer_lens.utils.get_act_name(hook_type, l) for l in patch_l]
+    patch_extract_map = dict(zip(patch_l, extract_l))
+    return patch_extract_map
+
+
+def patch_mlp_out(mlp_out_new, hook: HookPoint, old_activs, patch_map, extract_tok_idx, insert_tok_idx=None):
     print(f'patching {hook.name}')
-    mlp_out_old = old_activs[hook.name]
-    if extract_tok_idx is None or extract_tok_idx==-1:
+    mlp_out_old = old_activs[patch_map[hook.name]]
+    if extract_tok_idx is None or extract_tok_idx == -1:
         extract_tok_idx = (0, -1)
     if insert_tok_idx is None:
         insert_tok_idx = extract_tok_idx
@@ -23,11 +41,10 @@ def extract_resid_post(resid_post_layer, hook: HookPoint):
     resid_post[..., hook.layer(), :] = resid_post_layer
 
 
-def intervene(new_tokens, old_activs, model, extract_tok_idx=-1, insert_tok_idx=None, l_start_end=[0, 99],reset_hooks_end=True):
+def intervene(new_tokens, old_activs, model, patch_map, extract_tok_idx=-1, insert_tok_idx=None):
     ## patching mlp output_________________
-    patch_layers = list(range(0, model.cfg.n_layers))[l_start_end[0]:l_start_end[1]]
-    patch_hook_fn = partial(patch_mlp_out, old_activs=old_activs, extract_tok_idx=extract_tok_idx,insert_tok_idx=insert_tok_idx)
-    patch_layers_fn = [(transformer_lens.utils.get_act_name("mlp_out", layer), patch_hook_fn) for layer in patch_layers]
+    patch_hook_fn = partial(patch_mlp_out, old_activs=old_activs, patch_map=patch_map, extract_tok_idx=extract_tok_idx, insert_tok_idx=insert_tok_idx)
+    patch_layers_fn = [(hook_point, patch_hook_fn) for hook_point in patch_map.keys()]
 
     ## extracting residual stream out___________________
     global resid_post
@@ -35,9 +52,10 @@ def intervene(new_tokens, old_activs, model, extract_tok_idx=-1, insert_tok_idx=
     extract_hook_fn = partial(extract_resid_post)
     extract_layers_fn = [(transformer_lens.utils.get_act_name("resid_post", layer), extract_hook_fn) for layer in range(0, model.cfg.n_layers)]
 
-    patch_logits = model.run_with_hooks(new_tokens, fwd_hooks=patch_layers_fn + extract_layers_fn, return_type="logits",reset_hooks_end=reset_hooks_end)
+    reset_hooks_end = True
+    patch_logits = model.run_with_hooks(new_tokens, fwd_hooks=patch_layers_fn + extract_layers_fn, return_type="logits",
+                                        reset_hooks_end=reset_hooks_end)
     return patch_logits, resid_post
-
 
 if __name__ == "__main__":
     from measureLM import visualizing, decoding
