@@ -26,7 +26,10 @@ def visualize_token_ranks(scored_tokens, tokens, prompts):
         if tokens is not None:
             ax.legend(lines, tokens, loc='upper left', frameon=False)
         if prompts is not None:
-            ax.set_title(prompts[prompt_id], fontsize=titlefont, color="black", loc='center')
+            prompt = prompts[0]
+            if len(prompts) > 1:
+                prompt = prompts[prompt_id]
+            ax.set_title(prompt, fontsize=titlefont, color="black", loc='center')
 
         ax.set_xlabel('layers', fontsize=labelsize)
         ax.set_ylabel('reciprocal rank', fontsize=labelsize)
