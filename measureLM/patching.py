@@ -7,11 +7,13 @@ from transformer_lens.hook_points import (
 )
 
 
-def create_hook_mapping(model, extract_l=(0, 40), patch_l=(0, 40), hook_type="mlp_out"):
-    if isinstance(extract_l, tuple):
-        extract_l = list(range(*extract_l))
+def create_hook_mapping(model, patch_l=(0, 40), extract_l=None, hook_type="mlp_out"):
     if isinstance(patch_l, tuple):
         patch_l = list(range(*patch_l))
+    if extract_l is None:
+        extract_l = patch_l
+    if isinstance(extract_l, tuple):
+        extract_l = list(range(*extract_l))
 
     if len(extract_l) < len(patch_l):
         extract_l = extract_l + ([extract_l[-1]] * (len(patch_l) - len(extract_l)))
@@ -53,12 +55,14 @@ def intervene(new_tokens, old_activs, model, patch_map, extract_tok_idx=-1, inse
     extract_layers_fn = [(transformer_lens.utils.get_act_name("resid_post", layer), extract_hook_fn) for layer in range(0, model.cfg.n_layers)]
 
     reset_hooks_end = True
-    patch_logits = model.run_with_hooks(new_tokens, fwd_hooks=patch_layers_fn + extract_layers_fn, return_type="logits",
-                                        reset_hooks_end=reset_hooks_end)
+    patch_logits = model.run_with_hooks(new_tokens, fwd_hooks=patch_layers_fn + extract_layers_fn, return_type="logits",reset_hooks_end=reset_hooks_end)
     return patch_logits, resid_post
 
+
+
 if __name__ == "__main__":
-    from measureLM import visualizing, decoding
+
+    from measureLM import visualizing, decoding, scoring
 
     model = transformer_lens.HookedTransformer.from_pretrained("gpt2-medium").to("cpu")
     model.cfg.spacing = "Ġ"
@@ -75,7 +79,8 @@ if __name__ == "__main__":
     pred = model.tokenizer.convert_ids_to_tokens(torch.topk(new_logits[:, -1, :], k=3).indices.tolist()[0])
     print(pred)
 
-    patch_logits, resid_post = intervene(new_tokens, activs, model, l_start_end=[15, 30])
+    patch_map = create_hook_mapping(model, extract_l=(15, 40), patch_l=(15, 40))
+    patch_logits, resid_post = intervene(new_tokens, activs, model, patch_map, extract_tok_idx=-1)
     resid_layer_scores = decoding.early_decoding(resid_post, model)
 
     pred = model.tokenizer.convert_ids_to_tokens(torch.topk(patch_logits[:, -1, :], k=3).indices.tolist()[0])
@@ -84,6 +89,6 @@ if __name__ == "__main__":
     new_token_candidates = ["Germany", "Berlin", "mug", "table"]
 
     ## scoring
-    tok_idx = decoding.token_select(new_tokens, model)
-    scored_tokens = decoding.scores_to_tokens(resid_layer_scores[tok_idx], model, mode=new_token_candidates)
+    tok_idx = scoring.token_select(new_tokens, model)
+    scored_tokens = scoring.scores_to_tokens(resid_layer_scores, tok_idx, model, mode=new_token_candidates)
     visualizing.visualize_token_ranks(scored_tokens, new_token_candidates, new_prompts)
