@@ -45,12 +45,14 @@ def get_token_rank(scores, model, token):
     return token_rank, token_score
 
 
-def scores_to_tokens(layer_scores, model, mode=2, print_res=True):
+def scores_to_tokens(prompt_layer_scores, prompt_tok_idx, model, mode=2, print_res=True):
     prompt_layer_res = {}
-    for idx, prompt in enumerate(layer_scores):
-        print(f"\nprompt {idx}")
+    prompt_tok_idx = list(zip(prompt_tok_idx[0].view(-1), prompt_tok_idx[1].view(-1)))
+    for i, tok_idx in enumerate(prompt_tok_idx):
+        print(f"\nprompt {tok_idx[0]}")
+        layer_scores = prompt_layer_scores[tok_idx].squeeze()
         layer_res = {}
-        for l, scores in enumerate(prompt):
+        for l, scores in enumerate(layer_scores):
             if isinstance(mode, int):  ## get top tokens
                 tokens, scores = topK_scores(scores, model, topk=mode)
                 layer_res[l] = list(zip(scores, tokens))
@@ -68,8 +70,9 @@ def scores_to_tokens(layer_scores, model, mode=2, print_res=True):
                     layer_res[l] = token_ranks
                     if print_res:
                         print(f"layer {l}: {list(zip(layer_res[l], mode))}")
-        prompt_layer_res[idx] = layer_res
+        prompt_layer_res[i] = layer_res
     return prompt_layer_res
+
 
 
 if __name__ == "__main__":

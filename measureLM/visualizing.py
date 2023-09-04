@@ -34,7 +34,7 @@ def visualize_token_ranks(scored_tokens, tokens, prompts):
         ax.set_xlabel('layers', fontsize=labelsize)
         ax.set_ylabel('reciprocal rank', fontsize=labelsize)
         ax.tick_params(axis='both', which='major', labelsize=labelsize)
-        fig.show()
+        #fig.show()
         #fig.savefig(helpers.ROOT_DIR / "results" / "plots" / "test.pdf", dpi=200, bbox_inches='tight')
 
 if __name__ == "__main__":
