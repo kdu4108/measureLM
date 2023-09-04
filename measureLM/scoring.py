@@ -57,7 +57,8 @@ def scores_to_tokens(prompt_layer_scores, prompt_tok_idx, model, mode=2, print_r
                 tokens, scores = topK_scores(scores, model, topk=mode)
                 layer_res[l] = list(zip(scores, tokens))
                 if print_res:
-                    print(f"layer {l}: {layer_res[l]}")
+                    if l == len(layer_scores)-1:
+                        print(f"layer {l}: {layer_res[l]}")
 
             elif isinstance(mode, list):  ## search specific tokens
                 if isinstance(mode[0], list) and len(mode) == len(layer_scores):
@@ -69,7 +70,8 @@ def scores_to_tokens(prompt_layer_scores, prompt_tok_idx, model, mode=2, print_r
                         token_ranks.append(token_rank)
                     layer_res[l] = token_ranks
                     if print_res:
-                        print(f"layer {l}: {list(zip(layer_res[l], mode))}")
+                        if l == len(layer_scores) - 1:
+                            print(f"layer {l}: {list(zip(layer_res[l], mode))}")
         prompt_layer_res[i] = layer_res
     return prompt_layer_res
 

@@ -28,7 +28,7 @@ def create_hook_mapping(model, patch_l=(0, 40), extract_l=None, hook_type="mlp_o
 
 
 def patch_mlp_out(mlp_out_new, hook: HookPoint, old_activs, patch_map, extract_tok_idx, insert_tok_idx=None):
-    print(f'patching {hook.name}')
+    print(f'patching {hook.name} <-- {patch_map[hook.name]}')
     mlp_out_old = old_activs[patch_map[hook.name]]
     if extract_tok_idx is None or extract_tok_idx == -1:
         extract_tok_idx = (0, -1)
@@ -39,7 +39,7 @@ def patch_mlp_out(mlp_out_new, hook: HookPoint, old_activs, patch_map, extract_t
 
 
 def extract_resid_post(resid_post_layer, hook: HookPoint):
-    print(f'extracting {hook.name}')
+    #print(f'extracting {hook.name}')
     resid_post[..., hook.layer(), :] = resid_post_layer
 
 
