@@ -3,16 +3,17 @@ from measureLM import visualizing
 import torch
 import transformer_lens
 
-
-model = transformer_lens.HookedTransformer.from_pretrained("gpt2-medium").to("cpu")
-model.tokenizer.pad_token = model.tokenizer.eos_token
-
 ## ENCODING and DECODING____________________________
 
 def encode(texts, model, tokens_only=False):
     if model.tokenizer.pad_token is None:  ## some tokenizers do not have pad tokens
         model.tokenizer.pad_token = model.tokenizer.eos_token
-    tokens = model.to_tokens(texts, prepend_bos=False)
+    if hasattr(model, 'to_tokens'):
+        tokens = model.to_tokens(texts, prepend_bos=False)
+    elif hasattr(model, 'tokenizer'):
+        tokens = model.tokenizer(texts, padding=True, return_tensors='pt').input_ids
+    else:
+        raise Exception(f"no tokenizer given")
     if tokens_only:
         return tokens
     logits, activs = model.run_with_cache(tokens)
@@ -20,7 +21,12 @@ def encode(texts, model, tokens_only=False):
 
 
 def decode(h, model):
-    scores = model.unembed(h)
+    if hasattr(model, 'mlm_head'):
+        scores = model.unembed(model.mlm_head(h))
+    elif hasattr(model, 'ln_final'):
+        scores = model.unembed(model.ln_final(h))
+    else:
+        raise Exception(f"no decoding module")
     return scores
 
 
@@ -31,7 +37,7 @@ def early_decoding(activs, model, l_start_end=[0, 99]):
             if isinstance(activs, transformer_lens.ActivationCache):
                 hidden_name = transformer_lens.utils.get_act_name("resid_post", layer)
                 h = activs[hidden_name]
-            elif isinstance(activs, torch.FloatTensor):
+            elif isinstance(activs, torch.Tensor):
                 h = activs[...,layer,:]
             scores = decode(h, model)  ## decode the hidden state through last layer
             layer_scores.append(scores)
@@ -74,9 +80,9 @@ def topK_scores(scores, model, topk=5):
     return pred_tokens, pred_scores
 
 
-def get_token_rank(scores, model, token, space="Ġ"):
-    if space is not None:
-        token = "Ġ" + token
+def get_token_rank(scores, model, token):
+    assert "spacing" in dir(model.cfg), "need to set e.g. model.cfg.spacing = Ġ"
+    token = model.cfg.spacing + token
     token_id = model.tokenizer.convert_tokens_to_ids(token)
     token_ranks = torch.argsort(scores, descending=True)
 
@@ -119,6 +125,7 @@ if __name__ == "__main__":
     ## decoder-only model____________
     model = transformer_lens.HookedTransformer.from_pretrained("gpt2-medium").to("cpu")
     model.tokenizer.pad_token = model.tokenizer.eos_token
+    model.cfg.spacing = "Ġ"
 
     token_candidates = ["Paris", "France", "Poland", "Warsaw"]
     prompts = ["Q: What is the capital of France? A: Paris Q: What is the capital of Poland? A:"]
