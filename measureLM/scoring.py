@@ -4,6 +4,8 @@ import torch, transformer_lens
 
 def token_select(tokens, model, select_token="[MASK]"):  # "Ġhi"
     if select_token is not None:
+        assert "spacing" in dir(model.cfg), "need to set e.g. model.cfg.spacing = Ġ"
+        select_token = model.cfg.spacing + select_token
         select_token_id = model.tokenizer.convert_tokens_to_ids(select_token)  ## retrieve index of [MASK]
         batch_idx, seq_idx = (tokens == select_token_id).nonzero(as_tuple=True)
 
