@@ -27,15 +27,15 @@ def create_hook_mapping(model, patch_l=(0, 40), extract_l=None, hook_type="mlp_o
     return patch_extract_map
 
 
-def patch_mlp_out(mlp_out_new, hook: HookPoint, old_activs, patch_map, extract_tok_idx, insert_tok_idx=None):
+def patch_point(patched_activs, hook: HookPoint, old_activs, patch_map, extract_tok_idx, insert_tok_idx=None):
     print(f'patching {hook.name} <-- {patch_map[hook.name]}')
-    mlp_out_old = old_activs[patch_map[hook.name]]
+    old_activs = old_activs[patch_map[hook.name]]
     if extract_tok_idx is None or extract_tok_idx == -1:
         extract_tok_idx = (0, -1)
     if insert_tok_idx is None:
         insert_tok_idx = extract_tok_idx
-    mlp_out_new[insert_tok_idx] = mlp_out_old[extract_tok_idx]
-    return mlp_out_new
+    patched_activs[insert_tok_idx] = old_activs[extract_tok_idx]
+    return patched_activs
 
 
 def extract_resid_post(resid_post_layer, hook: HookPoint):
@@ -45,7 +45,7 @@ def extract_resid_post(resid_post_layer, hook: HookPoint):
 
 def intervene(new_tokens, old_activs, model, patch_map, extract_tok_idx=-1, insert_tok_idx=None):
     ## patching mlp output_________________
-    patch_hook_fn = partial(patch_mlp_out, old_activs=old_activs, patch_map=patch_map, extract_tok_idx=extract_tok_idx, insert_tok_idx=insert_tok_idx)
+    patch_hook_fn = partial(patch_point, old_activs=old_activs, patch_map=patch_map, extract_tok_idx=extract_tok_idx, insert_tok_idx=insert_tok_idx)
     patch_layers_fn = [(hook_point, patch_hook_fn) for hook_point in patch_map.keys()]
 
     ## extracting residual stream out___________________
