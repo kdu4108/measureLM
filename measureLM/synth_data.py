@@ -1,6 +1,6 @@
 import pandas as pd
 import tqdm
-from measureLM import helpers, measuring, visualizing
+from measureLM import helpers, measuring
 tqdm.tqdm.pandas()
 
 def load_synth_data(n=None, seed=0):

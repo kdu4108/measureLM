@@ -14,7 +14,7 @@ def get_logit_indices(toks_str, model):
     toks_idx = torch.LongTensor([model.tokenizer.convert_tokens_to_ids(model.cfg.spacing + tok_str) for tok_str in toks_str])
     return toks_idx.to(model.cfg.device)
 
-def select_logits(logits, logit_idx, norm=True):
+def select_logits(logits, logit_idx, norm=False):
     logits = torch.index_select(logits[..., -1, :], -1, logit_idx)
     if norm:
         logits = logits / logits.sum()
@@ -29,15 +29,14 @@ def form_prompt(prompt, kwargs):
     return prompt
 
 
-def prompt_with_cache(model, prompt, logit_idx=None):
+def prompt_with_cache(model, prompt, logit_idx=None, norm=False):
     logits, activs = model.run_with_cache(prompt)
     if isinstance(logit_idx,torch.LongTensor) or isinstance(logit_idx,torch.Tensor):
-        logits = select_logits(logits, logit_idx)
+        logits = select_logits(logits, logit_idx,norm)
     return logits, activs
 
 
 def get_scale_vals(kwargs, prompt, model, scales, reversed=False):
-
     scale_vals = []
     for scale in scales:
         toks_idx = get_logit_indices(scale, model)
