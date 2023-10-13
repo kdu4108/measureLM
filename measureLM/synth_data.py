@@ -3,10 +3,10 @@ import tqdm
 from measureLM import helpers, measuring, visualizing
 tqdm.tqdm.pandas()
 
-def load_synth_data(n=None):
+def load_synth_data(n=None, seed=0):
     df = pd.read_excel(helpers.ROOT_DIR / "data" / "friend_enemy_list.xlsx")
     if isinstance(n, int):
-        df = df.sample(n=n, random_state=0)
+        df = df.sample(n=n, random_state=seed)
     return df
 
 
