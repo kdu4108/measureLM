@@ -24,4 +24,3 @@ if __name__ == "__main__":
     scales = [["good", "bad"], ["friendly", "hostile"], ["positive", "negative"]]
     prompt = "The relationship between {ent1} and {ent2} is"
     df = measure_scale(df, prompt, model, scales)
-    visualizing.scale_scatter(df, scale_name="good-bad", save=False)
