@@ -100,13 +100,17 @@ def dim_reduction(embs, reduction="pca"):
 
 def plot_heatmap(array, title='Patching Effect', xticklabels=["attn_out", "mlp_out"], cmap="binary"):
     titlefont, labelsize = 12, 10
+    array_abs_max = np.max(np.abs(array))
     fig, ax = plt.subplots(1, 1, figsize=(2, 4), gridspec_kw={'hspace': 0.4})
-    ax = sns.heatmap(array, cmap=mpl.colormaps[cmap], xticklabels=xticklabels, square=False)
-    ax.set_title(title, fontsize=titlefont, color="black", loc='center', y=1.1)
+    ax = sns.heatmap(array, vmin=-array_abs_max, vmax=array_abs_max, cmap=mpl.colormaps[cmap], xticklabels=xticklabels, square=False)
+    ax.set_title(title, fontsize=titlefont, color="black", loc='center', y=1.22)
     ax.set_ylabel('layers', fontsize=labelsize)
 
-    mean_effect = list(map(lambda x: "%.3f" % x, list(array.max(0))))
+    max_effect = list(map(lambda x: "%.3f" % x, list(array.max(0))))
+    min_effect = list(map(lambda x: "%.3f" % x, list(array.min(0))))
     for i, x_tick_label in enumerate(ax.get_xticklabels()):
-        ax.text(x_tick_label.get_position()[0] - 0.5, -0.2, f"max:\n{mean_effect[i]}", fontsize=labelsize,
-                color="black", verticalalignment='bottom')
+        ax.text(x_tick_label.get_position()[0] - 0.5, -2.8, f"max:\n{max_effect[i]}", fontsize=labelsize,
+        color="black", verticalalignment='bottom')
+        ax.text(x_tick_label.get_position()[0] - 0.5, -0.2, f"min:\n{min_effect[i]}", fontsize=labelsize,
+        color="black", verticalalignment='bottom')
     plt.show()

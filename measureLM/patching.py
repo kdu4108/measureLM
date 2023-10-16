@@ -1,6 +1,5 @@
 import torch, transformer_lens, itertools
 from functools import partial
-from IPython.display import clear_output
 
 from transformer_lens.hook_points import (
     HookedRootModule,
@@ -35,15 +34,18 @@ def construct_bias_context_pairs(df, prompt=None, pos_prefix=None, neg_prefix=No
     elif pair_type == "context":
         ent1_ent2_pairs = []
         for ent1, ent2 in ent1_ent2:
+            no_context_prompt = measuring.form_prompt(f"{prompt}", {"ent1": ent1, "ent2": ent2})
             pos_context = measuring.form_prompt(f"{pos_prefix} {prompt}", {"ent1": ent1, "ent2": ent2})
             neg_context = measuring.form_prompt(f"{neg_prefix} {prompt}", {"ent1": ent1, "ent2": ent2})
-            ent1_ent2_pairs.append((pos_context, neg_context))
+
+            ent1_ent2_pairs.append((no_context_prompt, pos_context))
+            ent1_ent2_pairs.append((no_context_prompt, neg_context))
 
     print(f"pair_type: {pair_type} --> {len(ent1_ent2_pairs)} data points")
     return ent1_ent2_pairs
 
 
-def patch_hook_point(patched_activs, hook: HookPoint, new_activs, hook_layer_name, extract_tok_idx=-1,
+def patch_hook_point(old_activs, hook: HookPoint, new_activs, hook_layer_name, extract_tok_idx=-1,
                      insert_tok_idx=None):
     # print(f'patching {hook.name} <-- {hook_layer_name}')
     if extract_tok_idx is None or extract_tok_idx == -1:
@@ -51,8 +53,8 @@ def patch_hook_point(patched_activs, hook: HookPoint, new_activs, hook_layer_nam
     if insert_tok_idx is None:
         insert_tok_idx = extract_tok_idx
     new_activs_hook = new_activs[hook_layer_name]
-    vector_direction.append(torch.stack([new_activs_hook[extract_tok_idx], patched_activs[insert_tok_idx]]))
-    patched_activs[insert_tok_idx] = new_activs_hook[extract_tok_idx]
+    vector_direction.append(torch.stack([new_activs_hook[extract_tok_idx], old_activs[insert_tok_idx]]))
+    old_activs[insert_tok_idx] = new_activs_hook[extract_tok_idx]
 
 
 def patch_activs(model, old_logits, new_logits, new_activs, prompt, logit_idx):
@@ -67,8 +69,7 @@ def patch_activs(model, old_logits, new_logits, new_activs, prompt, logit_idx):
     for layer in range(n_layers):
         for hook_i, hook_name in enumerate(hook_names):
             hook_layer_name = transformer_lens.utils.get_act_name(hook_name, layer)
-            patch_layers_fn = [
-                (hook_layer_name, partial(patch_hook_point, new_activs=new_activs, hook_layer_name=hook_layer_name))]
+            patch_layers_fn = [(hook_layer_name, partial(patch_hook_point, new_activs=new_activs, hook_layer_name=hook_layer_name))]
             patched_logits = model.run_with_hooks(prompt, fwd_hooks=patch_layers_fn, reset_hooks_end=True)
 
             ## get measurement change
@@ -76,11 +77,10 @@ def patch_activs(model, old_logits, new_logits, new_activs, prompt, logit_idx):
             patched_logit_diff = (patched_logits[..., 0] - patched_logits[..., 1])
 
             ## store effect strength
-            old_logit_diff = (old_logits[..., 0] - old_logits[..., 1])
-            new_logit_diff = (new_logits[..., 0] - new_logits[..., 1])
+            old_logit_diff = measuring.compute_scale_val(old_logits, scale_val_type="diff")
+            new_logit_diff = measuring.compute_scale_val(new_logits, scale_val_type="diff")
             effect_strength[layer, hook_i] = torch.abs((patched_logit_diff - old_logit_diff) / (new_logit_diff - old_logit_diff))
             # torch.abs(patched_logits_v-old_logits_v)
-    clear_output()
 
     vector_direction = torch.stack(vector_direction)
     vector_direction = torch.movedim(vector_direction, 0, 1)

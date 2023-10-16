@@ -32,25 +32,33 @@ def form_prompt(prompt, kwargs):
 def prompt_with_cache(model, prompt, logit_idx=None, norm=False):
     logits, activs = model.run_with_cache(prompt)
     if isinstance(logit_idx,torch.LongTensor) or isinstance(logit_idx,torch.Tensor):
-        logits = select_logits(logits, logit_idx,norm)
+        logits = select_logits(logits, logit_idx, norm)
     return logits, activs
 
 
-def get_scale_vals(kwargs, prompt, model, scales, reversed=False):
+def compute_scale_val(logits, scale_val_type="diff"):
+    if scale_val_type=="diff":
+        scale_val = (logits[..., 0] - logits[..., 1])
+    elif scale_val_type == "pos":
+        scale_val = logits[..., 0].item()
+    return scale_val
+
+
+def get_scale_vals(kwargs, prompt, model, scales, scale_val_type="diff", norm=False, reversed=False):
     scale_vals = []
     for scale in scales:
         toks_idx = get_logit_indices(scale, model)
 
         logits, activs = prompt_with_cache(model, prompt, kwargs)
-        toks_logits = select_logits(logits, toks_idx)
-        scale_val = toks_logits[..., 0].item()
+        toks_logits = select_logits(logits, toks_idx, norm)
+        scale_val = compute_scale_val(toks_logits, scale_val_type)
 
         if reversed:
             kwargs['ent1'], kwargs['ent2'] = kwargs['ent2'], kwargs['ent1']
             logits, activs = prompt_with_cache(model, prompt, kwargs)
 
-            toks_logits = select_logits(logits, toks_idx)
-            scale_val_reverse = toks_logits[..., 0].item()
+            toks_logits = select_logits(logits, toks_idx, norm)
+            scale_val_reverse = compute_scale_val(toks_logits, scale_val_type)
             scale_val = (scale_val + scale_val_reverse) / 2
 
         scale_vals.append(scale_val)
