@@ -80,7 +80,6 @@ def patch_activs(model, old_logits, new_logits, new_activs, prompt, logit_idx):
             old_logit_diff = measuring.compute_scale_val(old_logits, scale_val_type="diff")
             new_logit_diff = measuring.compute_scale_val(new_logits, scale_val_type="diff")
             effect_strength[layer, hook_i] = torch.abs((patched_logit_diff - old_logit_diff) / (new_logit_diff - old_logit_diff))
-            # torch.abs(patched_logits_v-old_logits_v)
 
     vector_direction = torch.stack(vector_direction)
     vector_direction = torch.movedim(vector_direction, 0, 1)
@@ -102,6 +101,9 @@ def run_patching_loop(model, prompt_pairs, scale_idx):
     vector_scale = vector_scale.mean(0)
     vector_dir = torch.stack(all_vector_dir).detach()  ## shape: prompt, new vs old, layers, att vs mlp, emb dim
     return vector_scale, vector_dir
+
+
+
 
 if __name__ == "__main__":
 
