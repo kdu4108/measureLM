@@ -20,7 +20,6 @@ def select_logits(logits, logit_idx, norm=False):
         logits = logits / logits.sum(-1)
     return logits
 
-
 def form_prompt(prompt, kwargs):
     class Default(dict):
         def __missing__(self, key):
@@ -28,13 +27,11 @@ def form_prompt(prompt, kwargs):
     prompt = prompt.format_map(Default(kwargs))
     return prompt
 
-
 def prompt_with_cache(model, prompt, logit_idx=None, norm=False):
     logits, activs = model.run_with_cache(prompt)
     if isinstance(logit_idx,torch.LongTensor) or isinstance(logit_idx,torch.Tensor):
         logits = select_logits(logits, logit_idx, norm)
     return logits, activs
-
 
 def compute_scale_val(logits, scale_val_type="diff"):
     if scale_val_type=="diff":
@@ -42,7 +39,6 @@ def compute_scale_val(logits, scale_val_type="diff"):
     elif scale_val_type == "pos":
         scale_val = logits[..., 0].item()
     return scale_val
-
 
 def get_scale_vals(prompt, kwargs, model, scales, scale_val_type="pos", norm=True, reversed=False):
     scale_vals = []
