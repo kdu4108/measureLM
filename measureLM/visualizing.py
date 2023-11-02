@@ -115,3 +115,9 @@ def plot_heatmap(array, title='Patching Effect', xticklabels=["attn_out", "mlp_o
         #ax.text(x_tick_label.get_position()[0] - 0.5, -0.2, f"min:\n{min_effect[i]}", fontsize=labelsize,
         #color="black", verticalalignment='bottom')
     plt.show()
+
+
+def plot_2D_scatter(X_trans, y):
+    fig, (ax) = plt.subplots(1, figsize=(5, 5), gridspec_kw={'hspace': 0.40})
+    ax.scatter(X_trans[:, 0], X_trans[:, 1], c=y)
+    plt.show()

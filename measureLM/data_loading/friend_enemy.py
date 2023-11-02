@@ -4,7 +4,7 @@ from measureLM import helpers, measuring
 tqdm.tqdm.pandas()
 
 def load_synth_data(n=None, seed=0):
-    df = pd.read_excel(helpers.ROOT_DIR / "data" / "friend_enemy_list.xlsx")
+    df = pd.read_excel(helpers.ROOT_DIR / "data" / "FriendEnemy" / "friend_enemy_list.xlsx")
     if isinstance(n, int):
         df = df.sample(n=n, random_state=seed)
     return df
