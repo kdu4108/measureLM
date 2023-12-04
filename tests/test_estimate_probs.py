@@ -11,6 +11,8 @@ from measuring.estimate_probs import (
     score_model_for_next_word_prob,
     create_position_ids_from_input_ids,
     sharded_score_model,
+    estimate_entity_score,
+    kl_div,
 )
 
 
@@ -564,5 +566,124 @@ class TestEstimateCMI(ut.TestCase):
         # The answers distribution conditioned on contexts has full prob mass on an output depending on the context, so the entropy is 0 (there's 0 uncertainty in the answer once you know the context).
         # Therefore, the CMI should just be the value of the entropy of the answer distribution
         expected = np.log(output_size) - 0
+
+        assert np.isclose(actual, expected)
+
+
+class TestEstimateEntityScores(ut.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.model_name = "gpt2"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        cls.model = AutoModelForCausalLM.from_pretrained(
+            cls.model_name,
+        ).to(device)
+
+        cls.tokenizer = AutoTokenizer.from_pretrained(
+            cls.model_name,
+            padding_side="left",
+        )
+        cls.tokenizer.pad_token = cls.tokenizer.eos_token
+        cls.model.config.pad_token_id = cls.model.config.eos_token_id
+
+    @patch("measuring.estimate_probs.estimate_prob_x_given_e")
+    @patch("measuring.estimate_probs.score_model_for_next_word_prob")
+    def test_estimate_entity_score_when_contexts_have_no_effect_is_0(
+        self, mock_score_model_for_next_word_prob, mock_estimate_prob_x_given_e
+    ):
+        model = type(self).model
+        tokenizer = type(self).tokenizer
+
+        output_size = 4  # noqa: F841
+        num_contexts = 3
+
+        mock_estimate_prob_x_given_e.return_value = torch.ones(num_contexts) / num_contexts  # shape: (3,)
+        mock_score_model_for_next_word_prob.side_effect = [
+            torch.tensor([0.25, 0.25, 0.25, 0.25]),
+            torch.tensor(
+                [
+                    [0.25, 0.25, 0.25, 0.25],
+                    [0.25, 0.25, 0.25, 0.25],
+                    [0.25, 0.25, 0.25, 0.25],
+                ]
+            ),
+        ]
+
+        contexts = [
+            "The movie was great. ",
+            "I loved it. ",
+            "I hated this. ",
+        ]
+        query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
+        entity = "entity1"
+
+        actual = estimate_entity_score(
+            query=query,
+            entity=entity,
+            contexts=contexts,
+            model=model,
+            tokenizer=tokenizer,
+            distance_metric=kl_div,
+            answer_map=None,
+        )
+        expected = 0.0
+
+        assert actual == expected
+
+    @patch("measuring.estimate_probs.estimate_prob_x_given_e")
+    @patch("measuring.estimate_probs.score_model_for_next_word_prob")
+    def test_estimate_entity_score_when_context_determines_answer(
+        self, mock_score_model_for_next_word_prob, mock_estimate_prob_x_given_e
+    ):
+        model = type(self).model
+        tokenizer = type(self).tokenizer
+
+        output_size = 4  # noqa: F841
+        num_contexts = 3
+
+        mock_estimate_prob_x_given_e.return_value = torch.ones(num_contexts) / num_contexts
+        mock_score_model_for_next_word_prob.side_effect = [
+            torch.tensor([0.25, 0.25, 0.25, 0.25]),
+            torch.tensor(
+                [
+                    [1.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                ]
+            ),
+        ]
+
+        contexts = ["The movie was great. ", "I loved it. ", "I hated this. "]
+        query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
+        entity = "entity1"
+
+        actual = estimate_entity_score(
+            query=query,
+            entity=entity,
+            contexts=contexts,
+            model=model,
+            tokenizer=tokenizer,
+            distance_metric=kl_div,
+            answer_map=None,
+        )
+        expected = np.dot(
+            np.array(
+                [
+                    np.dot(
+                        np.array([1.0, 0.0, 0.0, 0.0]),
+                        np.nan_to_num(np.log(np.array([1.0, 0.0, 0.0, 0.0]) / np.array([0.25, 0.25, 0.25, 0.25]))),
+                    ),
+                    np.dot(
+                        np.array([0.0, 1.0, 0.0, 0.0]),
+                        np.nan_to_num(np.log(np.array([0.0, 1.0, 0.0, 0.0]) / np.array([0.25, 0.25, 0.25, 0.25]))),
+                    ),
+                    np.dot(
+                        np.array([0.0, 0.0, 1.0, 0.0]),
+                        np.nan_to_num(np.log(np.array([0.0, 0.0, 1.0, 0.0]) / np.array([0.25, 0.25, 0.25, 0.25]))),
+                    ),
+                ]
+            ),
+            mock_estimate_prob_x_given_e.return_value,
+        )  # interestingly, this also happens to equal the MI of ln(4) (entropy of the answer distribution)!
 
         assert np.isclose(actual, expected)

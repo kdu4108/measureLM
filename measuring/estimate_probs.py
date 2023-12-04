@@ -1,7 +1,9 @@
 from typing import Callable, List, Dict, Optional
+from collections import Counter
 import math
 import numpy as np
 import torch
+import scipy.stats as sst
 from transformers import GPTNeoXForCausalLM, AutoTokenizer
 
 from preprocessing.utils import format_query
@@ -54,6 +56,23 @@ def get_prob_next_word(model: GPTNeoXForCausalLM, tokens: Dict[str, torch.LongTe
     return logits[:, -1, :]  # shape: (bs, vocab_sz)
 
 
+def check_answer_map(model, answer_map):
+    special_model_tokens = set([v for (k, v) in vars(model.config).items() if k.endswith("token_id")])
+    counter = Counter()
+    for k, idxs in answer_map.items():
+        for idx in idxs:
+            idx = idx.item()
+            if idx in special_model_tokens:
+                counter[idx] += 1
+    if counter:
+        raise ValueError(
+            f"WARNING: some of the tokens in your answer map correspond to special tokens of the model you may not have intended. This could occur if one of your tokens to the model is unknown and therefore was given an ID of an UNK, PAD, EOS, etc. token. Here are the counts of each special token in your answer map: {counter}."
+        )
+        print(
+            f"WARNING: some of the tokens in your answer map correspond to special tokens of the model you may not have intended. This could occur if one of your tokens to the model is unknown and therefore was given an ID of an UNK, PAD, EOS, etc. token. Here are the counts of each special token in your answer map: {counter}."
+        )
+
+
 def score_model_for_next_word_prob(
     prompts: List[str],
     model,
@@ -79,6 +98,7 @@ def score_model_for_next_word_prob(
     last_word_logits = get_prob_next_word(model, tokens)  # shape: (len(contexts), vocab_sz)
 
     if answer_map is not None:
+        check_answer_map(model, answer_map)
         last_word_logits_agg = torch.zeros(last_word_logits.shape[0], len(answer_map), device=model.device)
         for answer, option_ids in answer_map.items():
             logit_vals = torch.index_select(
@@ -232,6 +252,75 @@ def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None):
     return np.sum(prob_x_y_given_e * np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e)))
 
 
+def kl_div(p, q):
+    return sst.entropy(p, q, axis=1)
+
+
+def difference(p, q):
+    p_prob = torch.nn.functional.softmax(torch.tensor(p), dim=1)
+    q_prob = torch.nn.functional.softmax(torch.tensor(q), dim=1)
+    return ((p_prob[:, 1] - p_prob[:, 0]) - (q_prob[:, 1] - q_prob[:, 0])).detach().cpu().numpy()
+
+
+def difference_abs_val(p, q):
+    p_prob = torch.nn.functional.softmax(torch.tensor(p), dim=1)
+    q_prob = torch.nn.functional.softmax(torch.tensor(q), dim=1)
+    return torch.abs((p_prob[:, 1] - p_prob[:, 0]) - (q_prob[:, 1] - q_prob[:, 0])).detach().cpu().numpy()
+
+
+def difference_p_good_only(p, q):
+    p_prob = torch.nn.functional.softmax(torch.tensor(p), dim=1)
+    q_prob = torch.nn.functional.softmax(torch.tensor(q), dim=1)
+    return (p_prob[:, 1] - q_prob[:, 1]).detach().cpu().numpy()
+
+
+def estimate_entity_score(query, entity, contexts, model, tokenizer, distance_metric=kl_div, answer_map=None):
+    """
+    Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
+
+    I(X; Y | q[e]) = \sum_{x \in X} \sum_{y \in Y} (p(x, y | q[e]) * log(p(y | x, q[e]) / p(y | q[e]))) # noqa: W605
+
+    So we need to monte carlo estimate:
+        (1) p(y | x, q[e])                                             , shape: (|X|, |Y|)
+        (2) p(x | q[e])                                                , shape: (|X|,)
+        (3) p(x, y | q[e]) = p(y | x, q[e]) * p(x | q[e])              , shape: (|X|, |Y|)
+        (4) p(y | q[e]) = \sum_{x \in X} (p(y | x, q[e]) * p(x | q[e])), shape: (|Y|,) # noqa: W605
+    """
+    if tokenizer.padding_side != "left":
+        raise ValueError(
+            f"Expected tokenizer {tokenizer} to have padding side of `left` for batch generation, instead has padding side of `{tokenizer.padding_side}`. Please make sure you initialize the tokenizer to use left padding."
+        )
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if model.config.pad_token_id != model.config.eos_token_id:
+        print("Setting model.config.pad_token_id to model.config.eos_token_id")
+        model.config.pad_token_id = model.config.eos_token_id
+
+    prob_x_given_e = estimate_prob_x_given_e(entity, contexts)  # shape: (|X|,)
+    prompt_sans_context = format_query(query=query, entity=entity, context="")
+    pred_sans_context = score_model_for_next_word_prob(
+        [prompt_sans_context], model, tokenizer, answer_map=answer_map
+    )  # shape: (1, len(answer_map))
+
+    prompts_with_context = [format_query(query=query, entity=entity, context=context) for context in contexts]
+    preds_with_context = sharded_score_model(
+        f=score_model_for_next_word_prob,
+        model=model,
+        tokenizer=tokenizer,
+        prompts=prompts_with_context,
+        bs=32,
+        answer_map=answer_map,
+    )  # shape: (len(contexts), len(answer_map))
+
+    distance_with_context = distance_metric(
+        preds_with_context.detach().cpu().numpy(), pred_sans_context.detach().cpu().numpy()
+    )  # shape: (len(contexts),)
+
+    return np.dot(distance_with_context, prob_x_given_e)
+
+
 if __name__ == "__main__":
     query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
     entity = "The Dark Knight"
@@ -253,3 +342,4 @@ if __name__ == "__main__":
 
     query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
     print(estimate_cmi(query, entity, contexts, model, tokenizer))
+    print(estimate_entity_score(query, entity, contexts, model, tokenizer, distance_metric=kl_div, answer_map=None))
