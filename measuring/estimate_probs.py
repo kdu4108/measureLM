@@ -51,8 +51,14 @@ def get_prob_next_word(model: GPTNeoXForCausalLM, tokens: Dict[str, torch.LongTe
     Returns:
         (bs, vocab_sz) tensor containing the probability distribution over the vocab of the next token for each sequence in the batch `tokens`.
     """
-    position_ids = create_position_ids_from_input_ids(tokens["input_ids"], model.config.pad_token_id)
-    logits = model(**tokens, position_ids=position_ids)["logits"]  # shape: (bs, mcw, vocab_sz)
+    try:
+        position_ids = create_position_ids_from_input_ids(tokens["input_ids"], model.config.pad_token_id)
+        logits = model(**tokens, position_ids=position_ids)["logits"]  # shape: (bs, mcw, vocab_sz)
+    except TypeError as e:  # noqa: F841
+        # print(
+        #     f"Failed to make forward pass with position_ids; do you have a sufficient transformers library version? (e.g. >=4.30.0 ish?)\nFull error: {e}"
+        # )
+        logits = model(**tokens)["logits"]  # shape: (bs, mcw, vocab_sz)
     return logits[:, -1, :]  # shape: (bs, vocab_sz)
 
 
@@ -257,20 +263,20 @@ def kl_div(p, q):
 
 
 def difference(p, q):
-    p_prob = torch.nn.functional.softmax(torch.tensor(p), dim=1)
-    q_prob = torch.nn.functional.softmax(torch.tensor(q), dim=1)
+    p_prob = torch.nn.functional.softmax(torch.tensor(p, dtype=torch.float), dim=1)
+    q_prob = torch.nn.functional.softmax(torch.tensor(q, dtype=torch.float), dim=1)
     return ((p_prob[:, 1] - p_prob[:, 0]) - (q_prob[:, 1] - q_prob[:, 0])).detach().cpu().numpy()
 
 
 def difference_abs_val(p, q):
-    p_prob = torch.nn.functional.softmax(torch.tensor(p), dim=1)
-    q_prob = torch.nn.functional.softmax(torch.tensor(q), dim=1)
+    p_prob = torch.nn.functional.softmax(torch.tensor(p, dtype=torch.float), dim=1)
+    q_prob = torch.nn.functional.softmax(torch.tensor(q, dtype=torch.float), dim=1)
     return torch.abs((p_prob[:, 1] - p_prob[:, 0]) - (q_prob[:, 1] - q_prob[:, 0])).detach().cpu().numpy()
 
 
 def difference_p_good_only(p, q):
-    p_prob = torch.nn.functional.softmax(torch.tensor(p), dim=1)
-    q_prob = torch.nn.functional.softmax(torch.tensor(q), dim=1)
+    p_prob = torch.nn.functional.softmax(torch.tensor(p, dtype=torch.float), dim=1)
+    q_prob = torch.nn.functional.softmax(torch.tensor(q, dtype=torch.float), dim=1)
     return (p_prob[:, 1] - q_prob[:, 1]).detach().cpu().numpy()
 
 
