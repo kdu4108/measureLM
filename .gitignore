@@ -1,3 +1,9 @@
+# logging
+wandb/
+
+# data
+*.json
+*.csv
 *.xlsx
 
 ## user defines
