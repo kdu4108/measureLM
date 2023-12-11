@@ -189,6 +189,7 @@ def estimate_prob_y_given_context_and_entity(
     num_samples=None,
     max_output_length=1,
     answer_map=None,
+    bs=32,
 ):
     """
     Args:
@@ -212,6 +213,7 @@ def estimate_prob_y_given_context_and_entity(
             tokenizer=tokenizer,
             num_samples=num_samples,
             max_output_length=max_output_length,
+            bs=bs,
         )
 
     return estimate_prob_next_word_given_x_and_entity(
@@ -221,11 +223,18 @@ def estimate_prob_y_given_context_and_entity(
         model=model,
         tokenizer=tokenizer,
         answer_map=answer_map,
+        bs=bs,
     )
 
 
 def sample_y_given_x_and_entity(
-    query, entity: str, contexts: List[str], model: GPTNeoXForCausalLM, tokenizer: AutoTokenizer, num_samples=1000
+    query,
+    entity: str,
+    contexts: List[str],
+    model: GPTNeoXForCausalLM,
+    tokenizer: AutoTokenizer,
+    num_samples=1000,
+    bs=32,
 ):
     """
     Args:
@@ -235,7 +244,7 @@ def sample_y_given_x_and_entity(
     raise NotImplementedError()
 
 
-def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None):
+def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None, bs=32):
     """
     Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
 
@@ -249,7 +258,13 @@ def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None):
     """
     prob_x_given_e = estimate_prob_x_given_e(entity, contexts)  # shape: (|X|,)
     prob_y_given_context_and_entity = estimate_prob_y_given_context_and_entity(
-        query, entity, contexts, model, tokenizer, answer_map=answer_map
+        query,
+        entity,
+        contexts,
+        model,
+        tokenizer,
+        answer_map=answer_map,
+        bs=bs,
     )  # shape: (|X|, |Y|)
 
     prob_x_y_given_e = np.einsum("ij, i -> ij", prob_y_given_context_and_entity, prob_x_given_e)  # shape: (|X|, |Y|)
