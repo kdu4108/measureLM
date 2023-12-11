@@ -127,7 +127,7 @@ def sharded_score_model(
     prompts: List[str],
     bs: Optional[int] = None,
     **kwargs,
-):
+) -> np.ndarray:
     if bs is None:
         bs = determine_bs(f, model, tokenizer, prompts, **kwargs)
 
@@ -135,9 +135,11 @@ def sharded_score_model(
     output = []
     for b in range(num_batches):
         start, end = b * bs, min((b + 1) * bs, len(prompts))
-        output.append(f(model=model, tokenizer=tokenizer, prompts=prompts, start=start, end=end, **kwargs))
+        output.append(
+            f(model=model, tokenizer=tokenizer, prompts=prompts, start=start, end=end, **kwargs).detach().cpu().numpy()
+        )
 
-    return torch.cat(output, dim=0)
+    return np.concatenate(output, axis=0)
 
 
 def estimate_prob_next_word_given_x_and_entity(
@@ -166,7 +168,7 @@ def estimate_prob_next_word_given_x_and_entity(
         print("Setting model.config.pad_token_id to model.config.eos_token_id")
         model.config.pad_token_id = model.config.eos_token_id
 
-    last_word_logits = sharded_score_model(
+    last_word_logits: np.ndarray = sharded_score_model(
         f=score_model_for_next_word_prob,
         model=model,
         tokenizer=tokenizer,
@@ -177,7 +179,7 @@ def estimate_prob_next_word_given_x_and_entity(
 
     last_word_probs = torch.nn.functional.softmax(last_word_logits, dim=1)  # shape: (len(contexts, vocab_sz))
 
-    return last_word_probs.cpu().detach().numpy()
+    return last_word_probs.detach().cpu().numpy()
 
 
 def estimate_prob_y_given_context_and_entity(
