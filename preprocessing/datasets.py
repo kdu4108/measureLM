@@ -254,7 +254,7 @@ class CountryCapital(EntityContextQueryDataset):
         if self.max_entities is not None:
             if self.cap_per_type:
                 entity_types = country_capitals["type"].unique()
-                country_capitals = country_capitals.groupby("type").sample(n=self.max_entities / len(entity_types))
+                country_capitals = country_capitals.groupby("type").sample(n=int(self.max_entities / len(entity_types)))
                 entities = country_capitals["country"].tolist()
             else:
                 entities: List[str] = country_capitals["country"].sample(self.max_entities).tolist()

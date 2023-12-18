@@ -5,6 +5,7 @@ wandb/
 *.json
 *.csv
 *.xlsx
+*.png
 
 ## user defines
 reconnect_info

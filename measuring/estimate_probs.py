@@ -127,7 +127,7 @@ def sharded_score_model(
     prompts: List[str],
     bs: Optional[int] = None,
     **kwargs,
-) -> np.ndarray:
+) -> torch.FloatTensor:
     if bs is None:
         bs = determine_bs(f, model, tokenizer, prompts, **kwargs)
 
@@ -136,10 +136,10 @@ def sharded_score_model(
     for b in range(num_batches):
         start, end = b * bs, min((b + 1) * bs, len(prompts))
         output.append(
-            f(model=model, tokenizer=tokenizer, prompts=prompts, start=start, end=end, **kwargs).detach().cpu().numpy()
+            f(model=model, tokenizer=tokenizer, prompts=prompts, start=start, end=end, **kwargs).detach().cpu()
         )
 
-    return np.concatenate(output, axis=0)
+    return torch.cat(output, dim=0).float()
 
 
 def estimate_prob_next_word_given_x_and_entity(
@@ -168,7 +168,7 @@ def estimate_prob_next_word_given_x_and_entity(
         print("Setting model.config.pad_token_id to model.config.eos_token_id")
         model.config.pad_token_id = model.config.eos_token_id
 
-    last_word_logits: np.ndarray = sharded_score_model(
+    last_word_logits: torch.FloatTensor = sharded_score_model(
         f=score_model_for_next_word_prob,
         model=model,
         tokenizer=tokenizer,
