@@ -216,6 +216,7 @@ class CountryCapital(EntityContextQueryDataset):
         # save_dir: str = None,
         max_entities: int = None,
         max_contexts: int = None,
+        cap_per_type: bool = False,
         seed: Optional[int] = None,
         raw_country_capitals_path: Optional[str] = "../data/CountryCapital/real-fake-country-capital.csv",
     ) -> None:
@@ -230,6 +231,7 @@ class CountryCapital(EntityContextQueryDataset):
         )
         self.raw_country_capitals_path = raw_country_capitals_path
         self.name = "CountryCapital"
+        self.cap_per_type = cap_per_type
         self.load_or_build_entities_contexts_and_queries(
             entities_path=entities_path,
             queries_path=queries_path,
@@ -247,11 +249,17 @@ class CountryCapital(EntityContextQueryDataset):
         Example:
         ["China", "USA", "Suriname"]
         """
-        country_capitals = load_dataset_from_path(self.raw_country_capitals_path)
-        entities: List[str] = country_capitals["country"].tolist()
+        country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
 
         if self.max_entities is not None:
-            entities = random.sample(entities, self.max_entities)
+            if self.cap_per_type:
+                entity_types = country_capitals["type"].unique()
+                country_capitals = country_capitals.groupby("type").sample(n=self.max_entities / len(entity_types))
+                entities = country_capitals["country"].tolist()
+            else:
+                entities: List[str] = country_capitals["country"].sample(self.max_entities).tolist()
+        else:
+            entities: List[str] = country_capitals["country"].tolist()
 
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
@@ -273,7 +281,7 @@ class CountryCapital(EntityContextQueryDataset):
             "The capital of Suriname is Kielecki.\n",
         ]
         """
-        country_capitals = load_dataset_from_path(self.raw_country_capitals_path)
+        country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
         contexts: List[str] = []
         for country in country_capitals["country"]:
             if country in self.entities:
