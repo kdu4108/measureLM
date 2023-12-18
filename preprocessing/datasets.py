@@ -328,6 +328,160 @@ class CountryCapital(EntityContextQueryDataset):
         return query_id_to_queries
 
 
+class FriendEnemy(EntityContextQueryDataset):
+    def __init__(
+        self,
+        entities_path: Optional[str] = None,
+        queries_path: Optional[str] = None,
+        contexts_path: Optional[str] = None,
+        # save_dir: str = None,
+        max_entities: int = None,
+        max_contexts: int = None,
+        cap_per_type: bool = False,
+        seed: Optional[int] = None,
+        raw_data_path: Optional[str] = "../data/FriendEnemy/raw-friend-enemy.csv",
+    ) -> None:
+        super().__init__(
+            entities_path=entities_path,
+            queries_path=queries_path,
+            contexts_path=contexts_path,
+            max_entities=max_entities,
+            max_contexts=max_contexts,
+            seed=seed,
+            # save_dir=save_dir,
+        )
+        self.raw_data_path = raw_data_path
+        self.name = "FriendEnemy"
+        self.cap_per_type = cap_per_type
+        self.load_or_build_entities_contexts_and_queries(
+            entities_path=entities_path,
+            queries_path=queries_path,
+            contexts_path=contexts_path,
+        )
+        self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
+        # self.df_for_scoring = self.get_df_for_scoring()
+
+    def build_entities_dataset(self) -> List[Tuple[str]]:
+        """
+        Returns a list of the entities for a task, represented as a list of tuple of strings.
+        Example:
+        [
+            ("China", "USA"),
+            ("Batman", "Joker"),
+        ]
+        """
+        friend_enemy_pairs: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
+
+        if self.max_entities is not None:
+            if self.cap_per_type:
+                entity_types = friend_enemy_pairs["type"].unique()
+                friend_enemy_pairs = friend_enemy_pairs.groupby("type").sample(n=self.max_entities / len(entity_types))
+                entities = list(zip(friend_enemy_pairs["ent1"].tolist(), friend_enemy_pairs["ent2"].tolist()))
+            else:
+                sample = friend_enemy_pairs.sample(self.max_entities)
+                entities = list(zip(sample["ent1"].tolist(), sample["ent2"].tolist()))
+        else:
+            entities: List[str] = list(zip(friend_enemy_pairs["ent1"].tolist(), friend_enemy_pairs["ent2"].tolist()))
+
+        if self.entities_path is not None:
+            self._save_to_json(entities, self.entities_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
+
+        return entities
+
+    def build_contexts_dataset(self) -> List[str]:
+        """
+        Returns a list of the contexts for a task, represented as a list of strings, and
+
+        Example:
+        [
+            "The capital of China is Kielecki.\n",
+            "The capital of USA is Kielecki.\n",
+            "The capital of Suriname is Kielecki.\n",
+        ]
+        """
+        pos_contexts = [
+            "{} loves {}.\n",
+            "{} adores {}.\n",
+            "{} likes {}.\n",
+            "{} appreciates {}.\n",
+            "{} hugs {}.\n",
+            "{} warmly shakes hands with {}.\n",
+            "{} smiles at {}.\n",
+            "{} kisses {}.\n",
+            "{} trusts {}.\n",
+        ]
+        neutral_contexts = [
+            "{} meets {}.\n",
+            "{} greets {}.\n",
+            "{} passes {}.\n",
+            "{} sees {}.\n",
+            "{} acknowledges {}.\n",
+            "{} shakes hands with {}.\n",
+            "{} calls {}.\n",
+            "{} forgets about {}.\n",
+            "{} acquaints with {}.\n",
+        ]
+        neg_contexts = [
+            "{} hates {}.\n",
+            "{} detests {}.\n",
+            "{} dislikes {}.\n",
+            "{} ignores {}.\n",
+            "{} attacks {}.\n",
+            "{} tricks {}.\n",
+            "{} spies on {}.\n",
+            "{} distrusts {}.\n",
+            "{} avoids {}.\n",
+        ]
+        raw_contexts = pos_contexts + neutral_contexts + neg_contexts
+
+        df: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
+        contexts: List[str] = []
+        for _, row in df.iterrows():
+            if (row["ent1"], row["ent2"]) in self.entities:
+                for context in raw_contexts:
+                    contexts.append(context.format(row["ent1"], row["ent2"]))
+
+        if self.max_contexts is not None:
+            contexts = random.sample(contexts, self.max_contexts)
+
+        if self.contexts_path is not None:
+            self._save_to_json(contexts, self.contexts_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save contexts to path {self.contexts_path}.")
+
+        return contexts
+
+    def build_queries_dataset(self) -> Dict[QueryID, List[str]]:
+        """
+
+        Returns a dict from a query to a list of strings, each of which represents a different formulation of that query, and
+
+        Example:
+        {
+            "qid_1": [
+                "Q: What is the capital of {}?\nA:",
+                "The capital of {} is",
+            ],
+        }
+        """
+        query_id_to_queries: Dict[QueryID, List[str]] = {
+            "friend-enemy": [
+                "Q: Are {} and {} friends or enemies?\nA:",
+                "Q: How friendly are {} and {}?\nA:",
+                "{} and {} are",
+            ],
+        }
+
+        if self.queries_path is not None:
+            self._save_to_json(query_id_to_queries, self.queries_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save queries to path {self.queries_path}.")
+
+        return query_id_to_queries
+
+
 def load_dataset_from_path(path: str, **kwargs):
     """
     Loads a dataset from the path.
