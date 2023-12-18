@@ -238,16 +238,18 @@ class CountryCapital(EntityContextQueryDataset):
             contexts_path=contexts_path,
         )
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
-        self.df_for_scoring = self.get_df_for_scoring()
+        # self.df_for_scoring = self.get_df_for_scoring()
 
-    def build_entities_dataset(self) -> List[str]:
+    def build_entities_dataset(self) -> List[Tuple[str]]:
         """
-        Returns a tuple containing:
-            (1) a list of the entities for a task, represented as a list of strings, and
-            (2) a path of a json of the above.
+        Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
 
         Example:
-        ["China", "USA", "Suriname"]
+        [
+            ("China",),
+            ("USA",),
+            ("Suriname",),
+        ]
         """
         country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
 
@@ -261,6 +263,8 @@ class CountryCapital(EntityContextQueryDataset):
         else:
             entities: List[str] = country_capitals["country"].tolist()
 
+        entities = [(e,) for e in entities]
+
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
         else:
@@ -270,9 +274,7 @@ class CountryCapital(EntityContextQueryDataset):
 
     def build_contexts_dataset(self) -> List[str]:
         """
-        Returns a tuple containing:
-            (1) a list of the contexts for a task, represented as a list of strings, and
-            (2) a path of a json of the above.
+        Returns a list of the contexts for a task, represented as a list of strings.
 
         Example:
         [
@@ -284,7 +286,7 @@ class CountryCapital(EntityContextQueryDataset):
         country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
         contexts: List[str] = []
         for country in country_capitals["country"]:
-            if country in self.entities:
+            if (country,) in self.entities:  # self.entities is a list of single-element tuples
                 for capital in country_capitals["capital"]:
                     contexts.append(f"The capital of {country} is {capital}.\n")
 
@@ -301,9 +303,7 @@ class CountryCapital(EntityContextQueryDataset):
     def build_queries_dataset(self) -> Dict[QueryID, List[str]]:
         """
 
-        Returns a tuple containing:
-            (1) a dict from a query to a list of strings, each of which represents a different formulation of that query, and
-            (2) a path of a json of the above.
+        Returns a dict from a query to a list of strings, each of which represents a different formulation of that query.
 
         Example:
         {
@@ -405,34 +405,34 @@ class FriendEnemy(EntityContextQueryDataset):
             "{} loves {}.\n",
             "{} adores {}.\n",
             "{} likes {}.\n",
-            "{} appreciates {}.\n",
-            "{} hugs {}.\n",
-            "{} warmly shakes hands with {}.\n",
-            "{} smiles at {}.\n",
-            "{} kisses {}.\n",
-            "{} trusts {}.\n",
+            # "{} appreciates {}.\n",
+            # "{} hugs {}.\n",
+            # "{} warmly shakes hands with {}.\n",
+            # "{} smiles at {}.\n",
+            # "{} kisses {}.\n",
+            # "{} trusts {}.\n",
         ]
         neutral_contexts = [
             "{} meets {}.\n",
-            "{} greets {}.\n",
-            "{} passes {}.\n",
+            # "{} greets {}.\n",
+            # "{} passes {}.\n",
             "{} sees {}.\n",
             "{} acknowledges {}.\n",
-            "{} shakes hands with {}.\n",
-            "{} calls {}.\n",
-            "{} forgets about {}.\n",
-            "{} acquaints with {}.\n",
+            # "{} shakes hands with {}.\n",
+            # "{} calls {}.\n",
+            # "{} forgets about {}.\n",
+            # "{} acquaints with {}.\n",
         ]
         neg_contexts = [
             "{} hates {}.\n",
             "{} detests {}.\n",
             "{} dislikes {}.\n",
-            "{} ignores {}.\n",
-            "{} attacks {}.\n",
-            "{} tricks {}.\n",
-            "{} spies on {}.\n",
-            "{} distrusts {}.\n",
-            "{} avoids {}.\n",
+            # "{} ignores {}.\n",
+            # "{} attacks {}.\n",
+            # "{} tricks {}.\n",
+            # "{} spies on {}.\n",
+            # "{} distrusts {}.\n",
+            # "{} avoids {}.\n",
         ]
         raw_contexts = pos_contexts + neutral_contexts + neg_contexts
 
