@@ -217,6 +217,7 @@ class CountryCapital(EntityContextQueryDataset):
         max_entities: int = None,
         max_contexts: int = None,
         cap_per_type: bool = False,
+        ablate_out_relevant_contexts: bool = False,
         seed: Optional[int] = None,
         raw_country_capitals_path: Optional[str] = "../data/CountryCapital/real-fake-country-capital.csv",
     ) -> None:
@@ -232,6 +233,7 @@ class CountryCapital(EntityContextQueryDataset):
         self.raw_country_capitals_path = raw_country_capitals_path
         self.name = "CountryCapital"
         self.cap_per_type = cap_per_type
+        self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
         self.load_or_build_entities_contexts_and_queries(
             entities_path=entities_path,
             queries_path=queries_path,
@@ -286,7 +288,10 @@ class CountryCapital(EntityContextQueryDataset):
         country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
         contexts: List[str] = []
         for country in country_capitals["country"]:
-            if (country,) in self.entities:  # self.entities is a list of single-element tuples
+            if self.ablate_out_relevant_contexts ^ ((country,) in self.entities):
+                # XOR - if you're ablating out all relevant contexts, then exclude all countries in your entity list.
+                #       OR if you're keeping relevant contexts, then include only countries in self.entities.
+                # self.entities is a list of single-element tuples
                 for capital in country_capitals["capital"]:
                     contexts.append(f"The capital of {country} is {capital}.\n")
 
