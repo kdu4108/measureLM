@@ -193,7 +193,7 @@ class EntityContextQueryDataset(Dataset):
             self.entities: List[str] = load_dataset_from_path(entities_path)
             self.contexts: List[str] = load_dataset_from_path(contexts_path)
             self.qid_to_queries: Dict[QueryID, List[str]] = load_dataset_from_path(queries_path)
-        except OSError:
+        except (OSError, TypeError):
             print(
                 f"Failed to load entities, contexts, and queries from paths {entities_path}, {contexts_path}, and {queries_path}.\nManually reconstructing dataset and saving to aforementioned paths."
             )
@@ -288,7 +288,10 @@ class CountryCapital(EntityContextQueryDataset):
         country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
         contexts: List[str] = []
         for country in country_capitals["country"]:
-            if self.ablate_out_relevant_contexts ^ ((country,) in self.entities):
+            if (self.ablate_out_relevant_contexts and (country,) not in self.entities) or (
+                not self.ablate_out_relevant_contexts and (country,) in self.entities
+            ):
+                # if self.ablate_out_relevant_contexts ^ ((country,) in self.entities):
                 # XOR - if you're ablating out all relevant contexts, then exclude all countries in your entity list.
                 #       OR if you're keeping relevant contexts, then include only countries in self.entities.
                 # self.entities is a list of single-element tuples
@@ -476,6 +479,135 @@ class FriendEnemy(EntityContextQueryDataset):
                 "Q: Are {} and {} friends or enemies?\nA:",
                 "Q: How friendly are {} and {}?\nA:",
                 "{} and {} are",
+            ],
+        }
+
+        if self.queries_path is not None:
+            self._save_to_json(query_id_to_queries, self.queries_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save queries to path {self.queries_path}.")
+
+        return query_id_to_queries
+
+
+class WorldLeaders(EntityContextQueryDataset):
+    def __init__(
+        self,
+        entities_path: Optional[str] = None,
+        queries_path: Optional[str] = None,
+        contexts_path: Optional[str] = None,
+        # save_dir: str = None,
+        max_entities: int = None,
+        max_contexts: int = None,
+        cap_per_type: bool = False,
+        ablate_out_relevant_contexts: bool = False,
+        seed: Optional[int] = None,
+        raw_data_path: Optional[str] = "../data/WorldLeaders/world-leaders-2001-to-2021.csv",
+    ) -> None:
+        super().__init__(
+            entities_path=entities_path,
+            queries_path=queries_path,
+            contexts_path=contexts_path,
+            max_entities=max_entities,
+            max_contexts=max_contexts,
+            seed=seed,
+            # save_dir=save_dir,
+        )
+        self.raw_data_path = raw_data_path
+        self.name = "WorldLeaders"
+        self.cap_per_type = cap_per_type
+        self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
+        self.load_or_build_entities_contexts_and_queries(
+            entities_path=entities_path,
+            queries_path=queries_path,
+            contexts_path=contexts_path,
+        )
+        self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
+        # self.df_for_scoring = self.get_df_for_scoring()
+
+    def build_entities_dataset(self) -> List[Tuple[str]]:
+        """
+        Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+
+        Example:
+        [
+            ("Biden",),
+            ("Xi Jinping",),
+            ("Macron",),
+        ]
+        """
+        df: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
+
+        if self.max_entities is not None:
+            if self.cap_per_type:
+                entity_types = df["type"].unique()
+                df = df.groupby("type").sample(n=int(self.max_entities / len(entity_types)))
+                entities = df["country"].tolist()
+            else:
+                entities: List[str] = df["leader"].sample(self.max_entities).tolist()
+        else:
+            entities: List[str] = df["leader"].tolist()
+
+        entities = [(e,) for e in entities]
+
+        if self.entities_path is not None:
+            self._save_to_json(entities, self.entities_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
+
+        return entities
+
+    def build_contexts_dataset(self) -> List[str]:
+        """
+        Returns a list of the contexts for a task, represented as a list of strings.
+
+        Example:
+        [
+            "Biden is the leader of USA.\n",
+            "Biden is the leader of China.\n",
+            "Biden is the leader of Suriname.\n",
+        ]
+        """
+        df: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
+        contexts: List[str] = []
+        for leader in df["leader"]:
+            if (self.ablate_out_relevant_contexts and (leader,) not in self.entities) or (
+                not self.ablate_out_relevant_contexts and (leader,) in self.entities
+            ):
+                # if self.ablate_out_relevant_contexts ^ ((country,) in self.entities):
+                # XOR - if you're ablating out all relevant contexts, then exclude all countries in your entity list.
+                #       OR if you're keeping relevant contexts, then include only countries in self.entities.
+                # self.entities is a list of single-element tuples
+                for country in df["country"]:
+                    contexts.append(f"{leader} is the leader of {country}.\n")
+
+        if self.max_contexts is not None:
+            contexts = random.sample(contexts, self.max_contexts)
+
+        if self.contexts_path is not None:
+            self._save_to_json(contexts, self.contexts_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save contexts to path {self.contexts_path}.")
+
+        return contexts
+
+    def build_queries_dataset(self) -> Dict[QueryID, List[str]]:
+        """
+
+        Returns a dict from a query to a list of strings, each of which represents a different formulation of that query.
+
+        Example:
+        {
+            "qid_1": [
+                "Q: What country does {entity} lead?\nA:",
+                "{entity} leads"
+            ],
+        }
+        """
+        query_id_to_queries: Dict[QueryID, List[str]] = {
+            "capital_of": [
+                "Q: What country is led by {}?\nA:",
+                "{} is the leader of",
             ],
         }
 
