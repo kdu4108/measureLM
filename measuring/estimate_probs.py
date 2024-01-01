@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional
+from typing import Callable, List, Dict, Optional, Set
 from collections import Counter
 import math
 import numpy as np
@@ -31,10 +31,18 @@ def create_position_ids_from_input_ids(input_ids, padding_idx):
     )  # + padding_idx (for some reason this is here in the OG code, but I can't make sense of why)
 
 
-def estimate_prob_x_given_e(entity: str, contexts: List[str]):
+def estimate_prob_x_given_e(entity: str, contexts: Set[str], contexts_counter: Optional[Counter] = None):
     """
     Returns a (len(contexts),) nparray containing the probability of each context.
+
+    Args:
+        contexts - a set of unique contexts
+        contexts_counter - a counter mapping the counts of each context in the list of contexts
     """
+    if contexts_counter is not None:
+        return np.array([contexts_counter[c] / contexts_counter.total() for c in contexts])
+
+    # Otherwise, assume uniform distribution over contexts
     return np.ones(len(contexts)) / len(contexts)
 
 
@@ -143,7 +151,7 @@ def sharded_score_model(
 
 
 def estimate_prob_next_word_given_x_and_entity(
-    query, entity: str, contexts: List[str], model: GPTNeoXForCausalLM, tokenizer: AutoTokenizer, bs=32, answer_map=None
+    query, entity: str, contexts: Set[str], model: GPTNeoXForCausalLM, tokenizer: AutoTokenizer, bs=32, answer_map=None
 ):
     """
     Args:
@@ -185,7 +193,7 @@ def estimate_prob_next_word_given_x_and_entity(
 def estimate_prob_y_given_context_and_entity(
     query: str,
     entity: str,
-    contexts: List[str],
+    contexts: Set[str],
     model: GPTNeoXForCausalLM,
     tokenizer: AutoTokenizer,
     num_samples=None,
@@ -258,11 +266,14 @@ def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None, bs=
         (3) p(x, y | q[e]) = p(y | x, q[e]) * p(x | q[e])              , shape: (|X|, |Y|)
         (4) p(y | q[e]) = \sum_{x \in X} (p(y | x, q[e]) * p(x | q[e])), shape: (|Y|,) # noqa: W605
     """
-    prob_x_given_e = estimate_prob_x_given_e(entity, contexts)  # shape: (|X|,)
+    contexts_counter = Counter(contexts)
+    contexts_set = set(contexts)
+
+    prob_x_given_e = estimate_prob_x_given_e(entity, contexts_set, contexts_counter=contexts_counter)  # shape: (|X|,)
     prob_y_given_context_and_entity = estimate_prob_y_given_context_and_entity(
         query,
         entity,
-        contexts,
+        contexts_set,
         model,
         tokenizer,
         answer_map=answer_map,

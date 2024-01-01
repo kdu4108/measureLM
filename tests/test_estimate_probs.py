@@ -1,3 +1,4 @@
+from collections import Counter
 import numpy as np
 import torch
 import unittest as ut
@@ -27,6 +28,20 @@ class TestEstimateProbXGivenE(ut.TestCase):
 
         expected = np.array([1 / 3, 1 / 3, 1 / 3])
         actual = estimate_prob_x_given_e(entity=entity, contexts=contexts)
+        assert np.array_equal(actual, expected)
+
+    def test_estimate_prob_x_given_e_duplicates(self):
+        contexts = [
+            "The movie was great.",
+            "I loved it.",
+            "I hated this.",
+            "I loved it.",
+        ]
+        contexts_counter = Counter(contexts)
+        entity = "entity1"
+
+        expected = np.array([1 / 4, 1 / 2, 1 / 4])
+        actual = estimate_prob_x_given_e(entity=entity, contexts=set(contexts), contexts_counter=contexts_counter)
         assert np.array_equal(actual, expected)
 
 
