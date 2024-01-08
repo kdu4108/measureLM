@@ -2,6 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
+import itertools
 import json
 import random
 import torch
@@ -609,6 +610,140 @@ class WorldLeaders(EntityContextQueryDataset):
                 "Q: What country is led by {}?\nA:",
                 "{} is the leader of",
             ],
+        }
+
+        if self.queries_path is not None:
+            self._save_to_json(query_id_to_queries, self.queries_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save queries to path {self.queries_path}.")
+
+        return query_id_to_queries
+
+
+class YagoECQ(EntityContextQueryDataset):
+    def __init__(
+        self,
+        name: str,
+        query_id: str,
+        query_types: List[str] = ["closed"],
+        entities_path: Optional[str] = None,
+        queries_path: Optional[str] = None,
+        contexts_path: Optional[str] = None,
+        # save_dir: str = None,
+        max_entities: int = None,
+        max_contexts: int = None,
+        cap_per_type: bool = False,
+        ablate_out_relevant_contexts: bool = False,
+        seed: Optional[int] = None,
+        raw_data_path: Optional[str] = "../data/YAGO/yago_qec.json",
+    ) -> None:
+        super().__init__(
+            entities_path=entities_path,
+            queries_path=queries_path,
+            contexts_path=contexts_path,
+            max_entities=max_entities,
+            max_contexts=max_contexts,
+            seed=seed,
+            # save_dir=save_dir,
+        )
+        self.raw_data_path = raw_data_path
+        self.name = name
+        self.query_id = query_id
+        self.query_types = query_types
+        valid_query_types = {"closed", "open"}
+        if not set(self.query_types).issubset(valid_query_types):
+            raise ValueError(f"query_types must be subset of {valid_query_types}, instead received {query_types}.")
+        self.cap_per_type = cap_per_type
+        self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
+        self.load_or_build_entities_contexts_and_queries(
+            entities_path=entities_path,
+            queries_path=queries_path,
+            contexts_path=contexts_path,
+        )
+        self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
+        # self.df_for_scoring = self.get_df_for_scoring()
+
+    def build_entities_dataset(self) -> List[Tuple[str]]:
+        """
+        Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+
+        Example:
+        [
+            ("Biden",),
+            ("Xi Jinping",),
+            ("Macron",),
+        ]
+        """
+        yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
+        entities: List[str] = yago_qec["entities"]
+
+        if self.max_entities is not None:
+            entities: List[str] = random.sample(entities, self.max_entities)
+
+        entities = [(e,) for e in entities]
+
+        if self.entities_path is not None:
+            self._save_to_json(entities, self.entities_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
+
+        return entities
+
+    def build_contexts_dataset(self) -> List[str]:
+        """
+        Returns a list of the contexts for a task, represented as a list of strings.
+
+        Example:
+        [
+            "Biden is the leader of USA.\n",
+            "Biden is the leader of China.\n",
+            "Biden is the leader of Suriname.\n",
+        ]
+        """
+        yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
+        entities: List[str] = yago_qec["entities"]
+        answers: List[str] = yago_qec["answers"]
+        context_templates: List[str] = yago_qec["context_templates"]
+
+        contexts: List[str] = []
+        for entity in entities:
+            if (self.ablate_out_relevant_contexts and (entity,) not in self.entities) or (
+                not self.ablate_out_relevant_contexts and (entity,) in self.entities
+            ):
+                # XOR - if you're ablating out all relevant contexts, then exclude all countries in your entity list.
+                #       OR if you're keeping relevant contexts, then include only countries in self.entities.
+                # self.entities is a list of single-element tuples
+                for answer in answers:
+                    for context_template in context_templates:
+                        contexts.append(context_template.format(entity=entity, answer=answer))
+
+        if self.max_contexts is not None:
+            contexts = random.sample(contexts, self.max_contexts)
+
+        if self.contexts_path is not None:
+            self._save_to_json(contexts, self.contexts_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save contexts to path {self.contexts_path}.")
+
+        return contexts
+
+    def build_queries_dataset(self) -> Dict[QueryID, List[str]]:
+        """
+
+        Returns a dict from a query to a list of strings, each of which represents a different formulation of that query.
+
+        Example:
+        {
+            "qid_1": [
+                "Q: What country does {entity} lead?\nA:",
+                "{entity} leads"
+            ],
+        }
+        """
+        yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
+        query_forms = list(itertools.chain.from_iterable([yago_qec["query_forms"][qt] for qt in self.query_types]))
+        query_id_to_queries: Dict[QueryID, List[str]] = {
+            self.query_id: query_forms,
         }
 
         if self.queries_path is not None:
