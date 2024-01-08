@@ -623,7 +623,7 @@ class WorldLeaders(EntityContextQueryDataset):
 class YagoECQ(EntityContextQueryDataset):
     def __init__(
         self,
-        name: str,
+        subname: str,
         query_id: str,
         query_types: List[str] = ["closed"],
         entities_path: Optional[str] = None,
@@ -647,7 +647,8 @@ class YagoECQ(EntityContextQueryDataset):
             # save_dir=save_dir,
         )
         self.raw_data_path = raw_data_path
-        self.name = name
+        self.name = "YagoECQ"
+        self.subname = subname
         self.query_id = query_id
         self.query_types = query_types
         valid_query_types = {"closed", "open"}
