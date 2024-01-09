@@ -355,25 +355,25 @@ def estimate_entity_score(query, entity, contexts, model, tokenizer, distance_me
     return np.dot(distance_with_context, prob_x_given_e)
 
 
-if __name__ == "__main__":
-    query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-    entity = "The Dark Knight"
-    contexts = [
-        "Here's a movie review: 'The movie was terrific and I loved it'.",
-        "Here's a movie review: 'The movie was awful and I hated it'.",
-    ]
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_name = "EleutherAI/pythia-70m-deduped"
+# if __name__ == "__main__":
+#     query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
+#     entity = "The Dark Knight"
+#     contexts = [
+#         "Here's a movie review: 'The movie was terrific and I loved it'.",
+#         "Here's a movie review: 'The movie was awful and I hated it'.",
+#     ]
+#     device = "cuda" if torch.cuda.is_available() else "cpu"
+#     model_name = "EleutherAI/pythia-70m-deduped"
 
-    model = GPTNeoXForCausalLM.from_pretrained(
-        model_name,
-    ).to(device)
+#     model = GPTNeoXForCausalLM.from_pretrained(
+#         model_name,
+#     ).to(device)
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name,
-        padding_side="left",
-    )
+#     tokenizer = AutoTokenizer.from_pretrained(
+#         model_name,
+#         padding_side="left",
+#     )
 
-    query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-    print(estimate_cmi(query, entity, contexts, model, tokenizer))
-    print(estimate_entity_score(query, entity, contexts, model, tokenizer, distance_metric=kl_div, answer_map=None))
+#     query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
+#     print(estimate_cmi(query, entity, contexts, model, tokenizer))
+#     print(estimate_entity_score(query, entity, contexts, model, tokenizer, distance_metric=kl_div, answer_map=None))
