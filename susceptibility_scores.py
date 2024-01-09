@@ -43,8 +43,8 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device):
 @plac.opt("QUERYID", "Name of the query id, if using YagoECQ dataset", type=str, abbrev="Q")
 @plac.opt("MAXCONTEXTS", "Max number of contexts in dataset", type=int, abbrev="MC")
 @plac.opt("MAXENTITIES", "Max number of entities in dataset", type=int, abbrev="ME")
-@plac.flg("CAPPERTYPE", "whether to compute entropy", abbrev="T")
-@plac.flg("ABLATEOUTRELEVANTCONTEXTS", "whether to compute entropy", abbrev="A")
+@plac.flg("CAPPERTYPE", "whether to cap per type", abbrev="T")
+@plac.flg("ABLATEOUTRELEVANTCONTEXTS", "whether to ablate out relevant contexts", abbrev="A")
 @plac.flg("OVERWRITE", "whether to overwrite existing results and recompute susceptibility scores", abbrev="O")
 def main(
     DATASET_NAME,
@@ -57,6 +57,7 @@ def main(
     MAXENTITIES=90,
     CAPPERTYPE=False,
     ABLATEOUTRELEVANTCONTEXTS=False,
+    OVERWRITE=False,
 ):
     # Set random seeds
     torch.manual_seed(SEED)

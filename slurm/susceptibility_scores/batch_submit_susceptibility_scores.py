@@ -29,7 +29,7 @@ for ds, rdp in dataset_names_and_rdps:
         for model_id, do_quantize in model_id_and_quantize_tuples:
             for qid in query_ids:
                 for mc in max_contexts:
-                    for me in max_contexts:
+                    for me in max_entities:
                         if RUN_LOCALLY:
                             subprocess.run(
                                 [
@@ -49,7 +49,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     "-ME",
                                     f"{me}",
                                 ]
-                                + (["-Q"] if do_quantize else [])
+                                + (["-B"] if do_quantize else [])
                                 + (["-A"] if ablate else [])
                                 + (["-T"] if cap_per_type else [])
                             )
@@ -66,7 +66,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     f"{mc}",
                                     f"{me}",
                                 ]
-                                + (["-Q"] if do_quantize else [])
+                                + (["-B"] if do_quantize else [])
                                 + (["-A"] if ablate else [])
                                 + (["-T"] if cap_per_type else [])
                             )
