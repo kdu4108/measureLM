@@ -1,7 +1,7 @@
 import subprocess
 import json
 
-RUN_LOCALLY = True
+RUN_LOCALLY = False
 YAGO_QEC_PATH = "data/YagoECQ/yago_qec.json"  # assuming you are running from the root project directory
 
 with open(YAGO_QEC_PATH) as f:
@@ -17,8 +17,8 @@ if RUN_LOCALLY:
     query_ids = list(yago_qec.keys())[:5]
 else:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    max_contexts = [450]
-    max_entities = [90]
+    max_contexts = [500]
+    max_entities = [100]
     query_ids = list(yago_qec.keys())
 
 cap_per_type = False
