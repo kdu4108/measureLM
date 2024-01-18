@@ -2,7 +2,9 @@
 wandb/
 
 # data
-*.json
+*entities.json
+*contexts.json
+*queries.json
 *.csv
 *.xlsx
 *.png
