@@ -3,6 +3,7 @@ import gc
 import os
 import sys
 import random
+import json
 from tqdm import tqdm
 
 from transformers import GPTNeoXForCausalLM, AutoTokenizer
@@ -60,8 +61,8 @@ def get_args():
         action="store_true",
         help="Whether to overwrite existing results and recompute susceptibility scores",
     )
-    parser.add_argument("-ET", "--ENTITYTYPES", type=str, nargs="+", default=["entities"], help="Entity types to use")
-    parser.add_argument("-QT", "--QUERYTYPES", type=str, nargs="+", default=["closed"], help="Query types to use")
+    parser.add_argument("-ET", "--ENTITYTYPES", type=json.loads, default=["entities"], help="Entity types to use")
+    parser.add_argument("-QT", "--QUERYTYPES", type=json.loads, default=["closed"], help="Query types to use")
     return parser.parse_args()
 
 
