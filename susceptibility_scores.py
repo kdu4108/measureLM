@@ -1,3 +1,4 @@
+import argparse
 import gc
 import os
 import sys
@@ -35,30 +36,51 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device):
     return model, tokenizer
 
 
-@plac.pos("DATASET_NAME", "Name of the dataset class", type=str)
-@plac.opt("RAWDATAPATH", "Path to the raw data", type=str, abbrev="P")
-@plac.opt("SEED", "random seed", type=int, abbrev="S")
-@plac.opt("MODELID", "Name of the model to use", type=str, abbrev="M")
-@plac.flg("LOADIN8BIT", "whether to load in 8 bit", abbrev="B")
-@plac.opt("QUERYID", "Name of the query id, if using YagoECQ dataset", type=str, abbrev="Q")
-@plac.opt("MAXCONTEXTS", "Max number of contexts in dataset", type=int, abbrev="MC")
-@plac.opt("MAXENTITIES", "Max number of entities in dataset", type=int, abbrev="ME")
-@plac.flg("CAPPERTYPE", "whether to cap per type", abbrev="T")
-@plac.flg("ABLATEOUTRELEVANTCONTEXTS", "whether to ablate out relevant contexts", abbrev="A")
-@plac.flg("OVERWRITE", "whether to overwrite existing results and recompute susceptibility scores", abbrev="O")
-def main(
-    DATASET_NAME,
-    RAWDATAPATH="data/YagoECQ/yago_qec.json",
-    SEED=0,
-    MODELID="EleutherAI/pythia-6.9b-deduped",
-    LOADIN8BIT=False,
-    QUERYID=None,
-    MAXCONTEXTS=450,
-    MAXENTITIES=90,
-    CAPPERTYPE=False,
-    ABLATEOUTRELEVANTCONTEXTS=False,
-    OVERWRITE=False,
-):
+def get_args():
+    parser = argparse.ArgumentParser(description="Description of your program")
+    parser.add_argument("DATASET_NAME", type=str, help="Name of the dataset class")
+    parser.add_argument(
+        "-P", "--RAWDATAPATH", type=str, default="data/YagoECQ/yago_qec.json", help="Path to the raw data"
+    )
+    parser.add_argument("-S", "--SEED", type=int, default=0, help="Random seed")
+    parser.add_argument(
+        "-M", "--MODELID", type=str, default="EleutherAI/pythia-6.9b-deduped", help="Name of the model to use"
+    )
+    parser.add_argument("-B", "--LOADIN8BIT", action="store_true", help="Whether to load in 8 bit")
+    parser.add_argument("-Q", "--QUERYID", type=str, help="Name of the query id, if using YagoECQ dataset")
+    parser.add_argument("-MC", "--MAXCONTEXTS", type=int, default=450, help="Max number of contexts in dataset")
+    parser.add_argument("-ME", "--MAXENTITIES", type=int, default=90, help="Max number of entities in dataset")
+    parser.add_argument("-T", "--CAPPERTYPE", action="store_true", help="Whether to cap per type")
+    parser.add_argument(
+        "-A", "--ABLATEOUTRELEVANTCONTEXTS", action="store_true", help="Whether to ablate out relevant contexts"
+    )
+    parser.add_argument(
+        "-O",
+        "--OVERWRITE",
+        action="store_true",
+        help="Whether to overwrite existing results and recompute susceptibility scores",
+    )
+    parser.add_argument("-ET", "--ENTITYTYPES", type=str, nargs="+", default=["entities"], help="Entity types to use")
+    parser.add_argument("-QT", "--QUERYTYPES", type=str, nargs="+", default=["closed"], help="Query types to use")
+    return parser.parse_args()
+
+
+def main():
+    args = get_args()
+    DATASET_NAME = args.DATASET_NAME
+    RAWDATAPATH = args.RAWDATAPATH
+    SEED = args.SEED
+    MODELID = args.MODELID
+    LOADIN8BIT = args.LOADIN8BIT
+    QUERYID = args.QUERYID
+    MAXCONTEXTS = args.MAXCONTEXTS
+    MAXENTITIES = args.MAXENTITIES
+    CAPPERTYPE = args.CAPPERTYPE
+    ABLATEOUTRELEVANTCONTEXTS = args.ABLATEOUTRELEVANTCONTEXTS
+    # OVERWRITE = args.OVERWRITE
+    ENTITYTYPES = args.ENTITYTYPES
+    QUERYTYPES = args.QUERYTYPES
+
     # Set random seeds
     torch.manual_seed(SEED)
     np.random.seed(SEED)
@@ -73,7 +95,10 @@ def main(
         ablate_out_relevant_contexts=ABLATEOUTRELEVANTCONTEXTS,
     )
     if DATASET_NAME == "YagoECQ":
-        DATASET_KWARGS_IDENTIFIABLE = {**DATASET_KWARGS_IDENTIFIABLE, **{"query_id": QUERYID, "subname": SUBNAME}}
+        DATASET_KWARGS_IDENTIFIABLE = {
+            **DATASET_KWARGS_IDENTIFIABLE,
+            **{"query_id": QUERYID, "subname": SUBNAME, "entity_types": ENTITYTYPES, "query_types": QUERYTYPES},
+        }
 
     LOG_DATASETS = True
 
@@ -109,6 +134,18 @@ def main(
         "-ablate"
         if "ablate_out_relevant_contexts" in DATASET_KWARGS_IDENTIFIABLE
         and DATASET_KWARGS_IDENTIFIABLE["ablate_out_relevant_contexts"]
+        else ""
+    )
+
+    data_id += (
+        "-ET_" + "_".join(DATASET_KWARGS_IDENTIFIABLE["entity_types"])
+        if "entity_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["entity_types"]
+        else ""
+    )
+
+    data_id += (
+        "-QT_" + "_".join(DATASET_KWARGS_IDENTIFIABLE["query_types"])
+        if "query_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["query_types"]
         else ""
     )
 
@@ -210,4 +247,4 @@ def main(
 
 
 if __name__ == "__main__":
-    plac.call(main)
+    main()

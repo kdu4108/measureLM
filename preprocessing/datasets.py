@@ -626,6 +626,7 @@ class YagoECQ(EntityContextQueryDataset):
         subname: str,
         query_id: str,
         query_types: List[str] = ["closed"],
+        entity_types: List[str] = ["entities"],
         entities_path: Optional[str] = None,
         queries_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
@@ -635,7 +636,7 @@ class YagoECQ(EntityContextQueryDataset):
         cap_per_type: bool = False,
         ablate_out_relevant_contexts: bool = False,
         seed: Optional[int] = None,
-        raw_data_path: Optional[str] = "../data/YAGO/yago_qec.json",
+        raw_data_path: Optional[str] = "../data/YagoECQ/yago_qec.json",
     ) -> None:
         super().__init__(
             entities_path=entities_path,
@@ -650,10 +651,17 @@ class YagoECQ(EntityContextQueryDataset):
         self.name = "YagoECQ"
         self.subname = subname
         self.query_id = query_id
+
         self.query_types = query_types
         valid_query_types = {"closed", "open"}
         if not set(self.query_types).issubset(valid_query_types):
             raise ValueError(f"query_types must be subset of {valid_query_types}, instead received {query_types}.")
+
+        self.entity_types = entity_types
+        valid_entity_types = {"entities", "fake_entities"}
+        if not set(self.entity_types).issubset(valid_entity_types):
+            raise ValueError(f"entity_types must be subset of {valid_entity_types}, instead received {entity_types}.")
+
         self.cap_per_type = cap_per_type
         self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
         self.load_or_build_entities_contexts_and_queries(
@@ -662,7 +670,13 @@ class YagoECQ(EntityContextQueryDataset):
             contexts_path=contexts_path,
         )
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
-        # self.df_for_scoring = self.get_df_for_scoring()
+
+    def _read_entities(self, yago_qec: dict) -> List[str]:
+        """Helper to read the eligible entities from yago_qec"""
+        # return yago_qec["entities"] # only real entities
+        return list(
+            itertools.chain.from_iterable([yago_qec[t] for t in self.entity_types])
+        )  # return entities of all types in self.entity_types
 
     def build_entities_dataset(self) -> List[Tuple[str]]:
         """
@@ -676,7 +690,7 @@ class YagoECQ(EntityContextQueryDataset):
         ]
         """
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
-        entities: List[str] = yago_qec["entities"]
+        entities: List[str] = self._read_entities(yago_qec)
 
         if self.max_entities is not None:
             entities: List[str] = random.sample(entities, self.max_entities)
@@ -702,7 +716,7 @@ class YagoECQ(EntityContextQueryDataset):
         ]
         """
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
-        entities: List[str] = yago_qec["entities"]
+        entities: List[str] = self._read_entities(yago_qec)
         answers: List[str] = yago_qec["answers"]
         context_templates: List[str] = yago_qec["context_templates"]
 
