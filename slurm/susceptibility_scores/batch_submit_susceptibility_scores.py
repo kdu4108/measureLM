@@ -21,7 +21,9 @@ else:
     max_entities = [100]
     query_ids = list(yago_qec.keys())
 
-entity_types = json.dumps(["entities", "fake_entities"])
+entity_types = json.dumps(
+    ["entities", "fake_entities"], separators=(",", ":")
+)  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 cap_per_type = False
 ablate = False
 
@@ -57,7 +59,7 @@ for ds, rdp in dataset_names_and_rdps:
                                 + (["-T"] if cap_per_type else [])
                             )
                         else:
-                            subprocess.check_call(
+                            cmd = (
                                 [
                                     "sbatch",
                                     "slurm/susceptibility_scores/submit_susceptibility_score.cluster",
@@ -74,3 +76,5 @@ for ds, rdp in dataset_names_and_rdps:
                                 + (["-A"] if ablate else [])
                                 + (["-T"] if cap_per_type else [])
                             )
+                            print(cmd)
+                            subprocess.check_call(cmd)
