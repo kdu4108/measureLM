@@ -234,7 +234,7 @@ yago_topic_to_qfs = {
     },
     "http://schema.org/founder": {
         "closed": [
-            "Q: Is {anwer} a founder of '{entity}'?\nA:",
+            "Q: Is {answer} a founder of '{entity}'?\nA:",
             "Q: Was '{entity}' founded by {answer}?\nA:",
         ],
         "open": ["Q: Who founded '{entity}'?\nA:", "'{entity}' was founded by"],
