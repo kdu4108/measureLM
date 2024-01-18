@@ -41,19 +41,19 @@ def get_args():
     parser = argparse.ArgumentParser(description="Description of your program")
     parser.add_argument("DATASET_NAME", type=str, help="Name of the dataset class")
     parser.add_argument(
-        "-P", "--RAWDATAPATH", type=str, default="data/YagoECQ/yago_qec.json", help="Path to the raw data"
+        "-P", "--RAW_DATA_PATH", type=str, default="data/YagoECQ/yago_qec.json", help="Path to the raw data"
     )
     parser.add_argument("-S", "--SEED", type=int, default=0, help="Random seed")
     parser.add_argument(
-        "-M", "--MODELID", type=str, default="EleutherAI/pythia-6.9b-deduped", help="Name of the model to use"
+        "-M", "--MODEL_ID", type=str, default="EleutherAI/pythia-6.9b-deduped", help="Name of the model to use"
     )
-    parser.add_argument("-B", "--LOADIN8BIT", action="store_true", help="Whether to load in 8 bit")
-    parser.add_argument("-Q", "--QUERYID", type=str, help="Name of the query id, if using YagoECQ dataset")
-    parser.add_argument("-MC", "--MAXCONTEXTS", type=int, default=450, help="Max number of contexts in dataset")
-    parser.add_argument("-ME", "--MAXENTITIES", type=int, default=90, help="Max number of entities in dataset")
-    parser.add_argument("-T", "--CAPPERTYPE", action="store_true", help="Whether to cap per type")
+    parser.add_argument("-B", "--LOAD_IN_8BIT", action="store_true", help="Whether to load in 8 bit")
+    parser.add_argument("-Q", "--QUERY_ID", type=str, help="Name of the query id, if using YagoECQ dataset")
+    parser.add_argument("-MC", "--MAX_CONTEXTS", type=int, default=450, help="Max number of contexts in dataset")
+    parser.add_argument("-ME", "--MAX_ENTITIES", type=int, default=90, help="Max number of entities in dataset")
+    parser.add_argument("-T", "--CAP_PER_TYPE", action="store_true", help="Whether to cap per type")
     parser.add_argument(
-        "-A", "--ABLATEOUTRELEVANTCONTEXTS", action="store_true", help="Whether to ablate out relevant contexts"
+        "-A", "--ABLATE_OUT_RELEVANT_CONTEXTS", action="store_true", help="Whether to ablate out relevant contexts"
     )
     parser.add_argument(
         "-O",
@@ -61,44 +61,44 @@ def get_args():
         action="store_true",
         help="Whether to overwrite existing results and recompute susceptibility scores",
     )
-    parser.add_argument("-ET", "--ENTITYTYPES", type=json.loads, default=["entities"], help="Entity types to use")
-    parser.add_argument("-QT", "--QUERYTYPES", type=json.loads, default=["closed"], help="Query types to use")
+    parser.add_argument("-ET", "--ENTITY_TYPES", type=json.loads, default=["entities"], help="Entity types to use")
+    parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed"], help="Query types to use")
     return parser.parse_args()
 
 
 def main():
     args = get_args()
     DATASET_NAME = args.DATASET_NAME
-    RAWDATAPATH = args.RAWDATAPATH
+    RAW_DATA_PATH = args.RAW_DATA_PATH
     SEED = args.SEED
-    MODELID = args.MODELID
-    LOADIN8BIT = args.LOADIN8BIT
-    QUERYID = args.QUERYID
-    MAXCONTEXTS = args.MAXCONTEXTS
-    MAXENTITIES = args.MAXENTITIES
-    CAPPERTYPE = args.CAPPERTYPE
-    ABLATEOUTRELEVANTCONTEXTS = args.ABLATEOUTRELEVANTCONTEXTS
+    MODEL_ID = args.MODEL_ID
+    LOAD_IN_8BIT = args.LOAD_IN_8BIT
+    QUERY_ID = args.QUERY_ID
+    MAX_CONTEXTS = args.MAX_CONTEXTS
+    MAX_ENTITIES = args.MAX_ENTITIES
+    CAP_PER_TYPE = args.CAP_PER_TYPE
+    ABLATE_OUT_RELEVANT_CONTEXTS = args.ABLATE_OUT_RELEVANT_CONTEXTS
     # OVERWRITE = args.OVERWRITE
-    ENTITYTYPES = args.ENTITYTYPES
-    QUERYTYPES = args.QUERYTYPES
+    ENTITY_TYPES = args.ENTITY_TYPES
+    QUERY_TYPES = args.QUERY_TYPES
 
     # Set random seeds
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     random.seed(SEED)
 
-    SUBNAME = f"{extract_name_from_yago_uri(QUERYID)[0]}_{extract_name_from_yago_uri(QUERYID)[1]}"  # TODO: probably need to fix this
+    SUBNAME = f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"  # TODO: probably need to fix this
     DATASET_KWARGS_IDENTIFIABLE = dict(
-        max_contexts=MAXCONTEXTS,
-        max_entities=MAXENTITIES,
-        cap_per_type=CAPPERTYPE,
-        raw_data_path=RAWDATAPATH,
-        ablate_out_relevant_contexts=ABLATEOUTRELEVANTCONTEXTS,
+        max_contexts=MAX_CONTEXTS,
+        max_entities=MAX_ENTITIES,
+        cap_per_type=CAP_PER_TYPE,
+        raw_data_path=RAW_DATA_PATH,
+        ablate_out_relevant_contexts=ABLATE_OUT_RELEVANT_CONTEXTS,
     )
     if DATASET_NAME == "YagoECQ":
         DATASET_KWARGS_IDENTIFIABLE = {
             **DATASET_KWARGS_IDENTIFIABLE,
-            **{"query_id": QUERYID, "subname": SUBNAME, "entity_types": ENTITYTYPES, "query_types": QUERYTYPES},
+            **{"query_id": QUERY_ID, "subname": SUBNAME, "entity_types": ENTITY_TYPES, "query_types": QUERY_TYPES},
         }
 
     LOG_DATASETS = True
@@ -173,8 +173,8 @@ def main():
     }
 
     # Construct model id
-    model_id = f"{MODELID}"
-    model_id += "-8bit" if LOADIN8BIT else ""
+    model_id = f"{MODEL_ID}"
+    model_id += "-8bit" if LOAD_IN_8BIT else ""
     model_dir = os.path.join(data_dir, "models", model_id)
 
     # Results path
@@ -220,7 +220,7 @@ def main():
         artifact.add_dir(local_path=data_dir)
         run.log_artifact(artifact)
 
-    model, tokenizer = load_model_and_tokenizer(MODELID, LOADIN8BIT, device)
+    model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
 
     tqdm.pandas()
     val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe.progress_apply(
