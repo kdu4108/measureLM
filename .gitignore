@@ -2,9 +2,10 @@
 wandb/
 
 # data
-*entities.json
-*contexts.json
-*queries.json
+**/inputs
+#entities.json
+#*contexts.json
+#*queries.json
 *.csv
 *.xlsx
 *.png
