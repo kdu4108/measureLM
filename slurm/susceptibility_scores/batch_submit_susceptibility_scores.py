@@ -21,6 +21,7 @@ else:
     max_entities = [100]
     query_ids = list(yago_qec.keys())
 
+entity_types = json.dumps(["entities", "fake_entities"])
 cap_per_type = False
 ablate = False
 
@@ -48,6 +49,8 @@ for ds, rdp in dataset_names_and_rdps:
                                     f"{mc}",
                                     "-ME",
                                     f"{me}",
+                                    "-ET",
+                                    f"{entity_types}",
                                 ]
                                 + (["-B"] if do_quantize else [])
                                 + (["-A"] if ablate else [])
@@ -65,6 +68,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     f"{qid}",
                                     f"{mc}",
                                     f"{me}",
+                                    f"{entity_types}",
                                 ]
                                 + (["-B"] if do_quantize else [])
                                 + (["-A"] if ablate else [])
