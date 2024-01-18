@@ -1,15 +1,15 @@
 import argparse
 import gc
+import json
+import random
 import os
 import sys
-import random
-import json
 from tqdm import tqdm
+from typing import List
 
 from transformers import GPTNeoXForCausalLM, AutoTokenizer
 import torch
 import numpy as np
-import plac
 import wandb
 
 from measuring.estimate_probs import estimate_cmi
@@ -38,7 +38,7 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Description of your program")
+    parser = argparse.ArgumentParser(description="Arguments for computing susceptibility scores.")
     parser.add_argument("DATASET_NAME", type=str, help="Name of the dataset class")
     parser.add_argument(
         "-P", "--RAW_DATA_PATH", type=str, default="data/YagoECQ/yago_qec.json", help="Path to the raw data"
@@ -66,27 +66,21 @@ def get_args():
     return parser.parse_args()
 
 
-def main():
-    args = get_args()
-    DATASET_NAME = args.DATASET_NAME
-    RAW_DATA_PATH = args.RAW_DATA_PATH
-    SEED = args.SEED
-    MODEL_ID = args.MODEL_ID
-    LOAD_IN_8BIT = args.LOAD_IN_8BIT
-    QUERY_ID = args.QUERY_ID
-    MAX_CONTEXTS = args.MAX_CONTEXTS
-    MAX_ENTITIES = args.MAX_ENTITIES
-    CAP_PER_TYPE = args.CAP_PER_TYPE
-    ABLATE_OUT_RELEVANT_CONTEXTS = args.ABLATE_OUT_RELEVANT_CONTEXTS
-    # OVERWRITE = args.OVERWRITE
-    ENTITY_TYPES = args.ENTITY_TYPES
-    QUERY_TYPES = args.QUERY_TYPES
-
-    # Set random seeds
-    torch.manual_seed(SEED)
-    np.random.seed(SEED)
-    random.seed(SEED)
-
+def construct_paths_and_dataset_kwargs(
+    DATASET_NAME: str,
+    RAW_DATA_PATH: str,
+    SEED: int,
+    MODEL_ID: str,
+    LOAD_IN_8BIT: bool,
+    QUERY_ID: str,
+    MAX_CONTEXTS: int,
+    MAX_ENTITIES: int,
+    CAP_PER_TYPE: bool,
+    ABLATE_OUT_RELEVANT_CONTEXTS: bool,
+    OVERWRITE: bool,
+    ENTITY_TYPES: List[str],
+    QUERY_TYPES: List[str],
+):
     SUBNAME = f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"  # TODO: probably need to fix this
     DATASET_KWARGS_IDENTIFIABLE = dict(
         max_contexts=MAX_CONTEXTS,
@@ -100,16 +94,6 @@ def main():
             **DATASET_KWARGS_IDENTIFIABLE,
             **{"query_id": QUERY_ID, "subname": SUBNAME, "entity_types": ENTITY_TYPES, "query_types": QUERY_TYPES},
         }
-
-    LOG_DATASETS = True
-
-    # Model parameters
-    BATCH_SZ = 16
-
-    # wandb stuff
-    PROJECT_NAME = "context-vs-bias"
-    GROUP_NAME = None
-    TAGS = ["yago"]
 
     # Paths
     # Construct dataset and data ids
@@ -187,6 +171,83 @@ def main():
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(model_dir, exist_ok=True)
+
+    return (
+        data_dir,
+        input_dir,
+        entities_path,
+        contexts_path,
+        queries_path,
+        val_data_path,
+        model_dir,
+        results_dir,
+        val_results_path,
+        data_id,
+        model_id,
+        DATASET_KWARGS_IDENTIFIABLE,
+    )
+
+
+def main():
+    args = get_args()
+    DATASET_NAME = args.DATASET_NAME
+    RAW_DATA_PATH = args.RAW_DATA_PATH
+    SEED = args.SEED
+    MODEL_ID = args.MODEL_ID
+    LOAD_IN_8BIT = args.LOAD_IN_8BIT
+    QUERY_ID = args.QUERY_ID
+    MAX_CONTEXTS = args.MAX_CONTEXTS
+    MAX_ENTITIES = args.MAX_ENTITIES
+    CAP_PER_TYPE = args.CAP_PER_TYPE
+    ABLATE_OUT_RELEVANT_CONTEXTS = args.ABLATE_OUT_RELEVANT_CONTEXTS
+    OVERWRITE = args.OVERWRITE
+    ENTITY_TYPES = args.ENTITY_TYPES
+    QUERY_TYPES = args.QUERY_TYPES
+
+    # Model parameters
+    BATCH_SZ = 16
+
+    # wandb stuff
+    PROJECT_NAME = "context-vs-bias"
+    GROUP_NAME = None
+    TAGS = ["yago"]
+    LOG_DATASETS = True
+
+    # Set random seeds
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
+    random.seed(SEED)
+
+    # Construct paths from run parameters and construct DATASET_KWARGS_IDENTIFIABLE
+    (
+        data_dir,
+        input_dir,
+        entities_path,
+        contexts_path,
+        queries_path,
+        val_data_path,
+        model_dir,
+        results_dir,
+        val_results_path,
+        data_id,
+        model_id,
+        DATASET_KWARGS_IDENTIFIABLE,
+    ) = construct_paths_and_dataset_kwargs(
+        DATASET_NAME=DATASET_NAME,
+        RAW_DATA_PATH=RAW_DATA_PATH,
+        SEED=SEED,
+        MODEL_ID=MODEL_ID,
+        LOAD_IN_8BIT=LOAD_IN_8BIT,
+        QUERY_ID=QUERY_ID,
+        MAX_CONTEXTS=MAX_CONTEXTS,
+        MAX_ENTITIES=MAX_ENTITIES,
+        CAP_PER_TYPE=CAP_PER_TYPE,
+        ABLATE_OUT_RELEVANT_CONTEXTS=ABLATE_OUT_RELEVANT_CONTEXTS,
+        OVERWRITE=OVERWRITE,
+        ENTITY_TYPES=ENTITY_TYPES,
+        QUERY_TYPES=QUERY_TYPES,
+    )
+
     dataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
 
     # GPU stuff
