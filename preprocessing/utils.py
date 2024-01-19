@@ -9,6 +9,8 @@ def format_query(query: str, entity: Tuple[str], context: str, prefix="", answer
     """
     if "{entity}" in query:
         if "{answer}" in query:
+            if answer is None:
+                raise ValueError("Expected answer to be provided because query contains {answer} but none was given.")
             concrete_query = query.format(entity=entity[0], answer=answer)
         else:
             concrete_query = query.format(entity=entity[0])

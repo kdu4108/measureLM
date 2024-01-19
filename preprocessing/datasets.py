@@ -47,6 +47,7 @@ class EntityContextQueryDataset(Dataset):
         entities_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
         queries_path: Optional[str] = None,
+        answers_path: Optional[str] = None,
         # save_dir: str = None,
         max_entities: Optional[int] = None,
         max_contexts: Optional[int] = None,
@@ -62,6 +63,7 @@ class EntityContextQueryDataset(Dataset):
         self.entities_path = entities_path
         self.contexts_path = contexts_path
         self.queries_path = queries_path
+        self.answers_path = answers_path
         # self.entities_path = (
         #     entities_path if entities_path is not None else os.path.join(save_dir, "entities.json")
         # )
@@ -79,18 +81,18 @@ class EntityContextQueryDataset(Dataset):
 
     def _save_to_json(self, obj, path) -> None:
         with open(path, "w") as f:
-            json.dump(obj, f)
+            json.dump(obj, f, ensure_ascii=False, indent=4)
         return path
 
     def get_contexts_per_query_entity_df(self):
         return pd.DataFrame(
             [
-                (q_id, query_form, entity, self.contexts)
+                (q_id, query_form, entity, answer, self.contexts)
                 for q_id, query_forms in self.qid_to_queries.items()
                 for query_form in query_forms
-                for entity in self.entities
+                for entity, answer in zip(self.entities, self.answers)
             ],
-            columns=["q_id", "query_form", "entity", "contexts"],
+            columns=["q_id", "query_form", "entity", "answer", "contexts"],
         )
 
     def get_entities_per_query_context_df(self):
@@ -139,14 +141,25 @@ class EntityContextQueryDataset(Dataset):
 
         return qid_to_query_entity_context_dict
 
-    def build_entities_dataset(self) -> Tuple[List[str], os.PathLike]:
+    def build_entities_and_answers_dataset(self) -> Tuple[List[Tuple[str]], List[str]]:
         """
         Returns a tuple containing:
-            (1) a list of the entities for a task, represented as a list of strings, and
-            (2) a path of a json of the above.
+            (1) a list of the entities for a task, represented as a list of tuples of strings, and
+            (2) a list of the corresponding answer for each entities (for the query defining this dataset instance)
 
-        Example:
-        ["China", "USA", "Suriname"]
+        Example (if the task is about country capitals):
+        (
+            [
+                ("China",),
+                ("USA",),
+                ("Suriname",),
+            ],
+            [
+                "Beijing",
+                "Washington DC",
+                "Paramaribo",
+            ]
+        )
         """
         raise NotImplementedError("This needs to be implemented in a concrete subclass for the task of interest.")
 
@@ -167,7 +180,6 @@ class EntityContextQueryDataset(Dataset):
 
     def build_queries_dataset(self) -> Tuple[Dict[QueryID, List[str]], os.PathLike]:
         """
-
         Returns a tuple containing:
             (1) a dict from a query to a list of strings, each of which represents a different formulation of that query, and
             (2) a path of a json of the above.
@@ -187,23 +199,25 @@ class EntityContextQueryDataset(Dataset):
         entities_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
         queries_path: Optional[str] = None,
+        answers_path: Optional[str] = None,
     ):
         try:
             if self.overwrite:
                 raise ValueError("User determined to overwrite existing datasets.")
-            self.entities: List[str] = load_dataset_from_path(entities_path)
+            self.entities: List[Tuple[str]] = load_dataset_from_path(entities_path)
+            self.answers: List[Tuple[str]] = load_dataset_from_path(answers_path)
             self.contexts: List[str] = load_dataset_from_path(contexts_path)
             self.qid_to_queries: Dict[QueryID, List[str]] = load_dataset_from_path(queries_path)
         except (OSError, TypeError):
             print(
-                f"Failed to load entities, contexts, and queries from paths {entities_path}, {contexts_path}, and {queries_path}.\nManually reconstructing dataset and saving to aforementioned paths."
+                f"Failed to load entities, answers, contexts, and queries from paths {entities_path}, {answers_path}, {contexts_path}, and {queries_path}.\nManually reconstructing dataset and saving to aforementioned paths."
             )
         except ValueError:
             print(
-                f"Overwriting datasets (if they already exist) at {entities_path}, {contexts_path}, and {queries_path}."
+                f"Overwriting datasets (if they already exist) at {entities_path}, {answers_path}, {contexts_path}, and {queries_path}."
             )
         finally:
-            self.entities = self.build_entities_dataset()
+            self.entities, self.answers = self.build_entities_and_answers_dataset()
             self.contexts = self.build_contexts_dataset()
             self.qid_to_queries = self.build_queries_dataset()
 
@@ -221,6 +235,7 @@ class CountryCapital(EntityContextQueryDataset):
         ablate_out_relevant_contexts: bool = False,
         seed: Optional[int] = None,
         raw_country_capitals_path: Optional[str] = "../data/CountryCapital/real-fake-country-capital.csv",
+        overwrite: bool = False,
     ) -> None:
         super().__init__(
             entities_path=entities_path,
@@ -229,6 +244,7 @@ class CountryCapital(EntityContextQueryDataset):
             max_entities=max_entities,
             max_contexts=max_contexts,
             seed=seed,
+            overwrite=overwrite,
             # save_dir=save_dir,
         )
         self.raw_country_capitals_path = raw_country_capitals_path
@@ -243,16 +259,25 @@ class CountryCapital(EntityContextQueryDataset):
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
         # self.df_for_scoring = self.get_df_for_scoring()
 
-    def build_entities_dataset(self) -> List[Tuple[str]]:
+    def build_entities_and_answers_dataset(self) -> Tuple[List[Tuple[str]], List[str]]:
         """
-        Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+        Returns a tuple containing:
+            (1) a list of the entities for a task, represented as a list of tuples of strings, and
+            (2) a list of the corresponding answer for each entities (for the query defining this dataset instance)
 
-        Example:
-        [
-            ("China",),
-            ("USA",),
-            ("Suriname",),
-        ]
+        Example (if the task is about country capitals):
+        (
+            [
+                ("China",),
+                ("USA",),
+                ("Suriname",),
+            ],
+            [
+                "Beijing",
+                "Washington DC",
+                "Paramaribo",
+            ]
+        )
         """
         country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
 
@@ -267,13 +292,14 @@ class CountryCapital(EntityContextQueryDataset):
             entities: List[str] = country_capitals["country"].tolist()
 
         entities = [(e,) for e in entities]
+        answers = [None] * len(entities)  # TODO: implement answers for this task
 
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
         else:
             print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
 
-        return entities
+        return entities, answers
 
     def build_contexts_dataset(self) -> List[str]:
         """
@@ -349,6 +375,7 @@ class FriendEnemy(EntityContextQueryDataset):
         cap_per_type: bool = False,
         seed: Optional[int] = None,
         raw_data_path: Optional[str] = "../data/FriendEnemy/raw-friend-enemy.csv",
+        overwrite: bool = False,
     ) -> None:
         super().__init__(
             entities_path=entities_path,
@@ -357,6 +384,7 @@ class FriendEnemy(EntityContextQueryDataset):
             max_entities=max_entities,
             max_contexts=max_contexts,
             seed=seed,
+            overwrite=overwrite,
             # save_dir=save_dir,
         )
         self.raw_data_path = raw_data_path
@@ -370,14 +398,24 @@ class FriendEnemy(EntityContextQueryDataset):
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
         # self.df_for_scoring = self.get_df_for_scoring()
 
-    def build_entities_dataset(self) -> List[Tuple[str]]:
+    def build_entities_and_answers_dataset(self) -> Tuple[List[Tuple[str]], List[str]]:
         """
-        Returns a list of the entities for a task, represented as a list of tuple of strings.
+        Returns a tuple containing:
+            (1) a list of the entities for a task, represented as a list of tuples of strings, and
+            (2) a list of the corresponding answer for each entities (for the query defining this dataset instance)
         Example:
-        [
-            ("China", "USA"),
-            ("Batman", "Joker"),
-        ]
+        (
+            [
+                ("China", "USA"),
+                ("Batman", "Joker"),
+            ],
+            [
+                None,
+                None,
+            ]
+        )
+
+        This case is weird because there are no answers for this task. Maybe this formulation isn't right hm...
         """
         friend_enemy_pairs: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
 
@@ -392,12 +430,13 @@ class FriendEnemy(EntityContextQueryDataset):
         else:
             entities: List[str] = list(zip(friend_enemy_pairs["ent1"].tolist(), friend_enemy_pairs["ent2"].tolist()))
 
+        answers = [None] * len(entities)  # TODO: implement answers for this task
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
         else:
             print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
 
-        return entities
+        return entities, answers
 
     def build_contexts_dataset(self) -> List[str]:
         """
@@ -464,7 +503,6 @@ class FriendEnemy(EntityContextQueryDataset):
 
     def build_queries_dataset(self) -> Dict[QueryID, List[str]]:
         """
-
         Returns a dict from a query to a list of strings, each of which represents a different formulation of that query, and
 
         Example:
@@ -504,6 +542,7 @@ class WorldLeaders(EntityContextQueryDataset):
         ablate_out_relevant_contexts: bool = False,
         seed: Optional[int] = None,
         raw_data_path: Optional[str] = "../data/WorldLeaders/world-leaders-2001-to-2021.csv",
+        overwrite: bool = False,
     ) -> None:
         super().__init__(
             entities_path=entities_path,
@@ -512,6 +551,7 @@ class WorldLeaders(EntityContextQueryDataset):
             max_entities=max_entities,
             max_contexts=max_contexts,
             seed=seed,
+            overwrite=overwrite,
             # save_dir=save_dir,
         )
         self.raw_data_path = raw_data_path
@@ -526,16 +566,25 @@ class WorldLeaders(EntityContextQueryDataset):
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
         # self.df_for_scoring = self.get_df_for_scoring()
 
-    def build_entities_dataset(self) -> List[Tuple[str]]:
+    def build_entities_and_answers_dataset(self) -> Tuple[List[Tuple[str]], List[str]]:
         """
-        Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+        Returns a tuple containing:
+            (1) a list of the entities for a task, represented as a list of tuples of strings, and
+            (2) a list of the corresponding answer for each entities (for the query defining this dataset instance)
 
         Example:
-        [
-            ("Biden",),
-            ("Xi Jinping",),
-            ("Macron",),
-        ]
+        (
+            [
+                ("Biden",),
+                ("Xi Jinping",),
+                ("Macron",),
+            ],
+            [
+                "USA",
+                "China",
+                "France",
+            ]
+        )
         """
         df: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
 
@@ -550,13 +599,14 @@ class WorldLeaders(EntityContextQueryDataset):
             entities: List[str] = df["leader"].tolist()
 
         entities = [(e,) for e in entities]
+        answers = [None] * len(entities)  # TODO: implement answers for this task
 
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
         else:
             print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
 
-        return entities
+        return entities, answers
 
     def build_contexts_dataset(self) -> List[str]:
         """
@@ -630,6 +680,7 @@ class YagoECQ(EntityContextQueryDataset):
         entities_path: Optional[str] = None,
         queries_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
+        answers_path: Optional[str] = None,
         # save_dir: str = None,
         max_entities: int = None,
         max_contexts: int = None,
@@ -637,14 +688,17 @@ class YagoECQ(EntityContextQueryDataset):
         ablate_out_relevant_contexts: bool = False,
         seed: Optional[int] = None,
         raw_data_path: Optional[str] = "../data/YagoECQ/yago_qec.json",
+        overwrite: bool = False,
     ) -> None:
         super().__init__(
             entities_path=entities_path,
             queries_path=queries_path,
             contexts_path=contexts_path,
+            answers_path=answers_path,
             max_entities=max_entities,
             max_contexts=max_contexts,
             seed=seed,
+            overwrite=overwrite,
             # save_dir=save_dir,
         )
         self.raw_data_path = raw_data_path
@@ -668,6 +722,7 @@ class YagoECQ(EntityContextQueryDataset):
             entities_path=entities_path,
             queries_path=queries_path,
             contexts_path=contexts_path,
+            answers_path=answers_path,
         )
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
 
@@ -678,31 +733,91 @@ class YagoECQ(EntityContextQueryDataset):
             itertools.chain.from_iterable([yago_qec[t] for t in self.entity_types])
         )  # return entities of all types in self.entity_types
 
-    def build_entities_dataset(self) -> List[Tuple[str]]:
+    def build_entities_and_answers_dataset(self) -> Tuple[List[Tuple[str]], List[str]]:
         """
-        Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+        Returns
+            a list of the entities for a task, represented as a list of (single-element) tuples of strings
+            AND
+            a list of the answers corresponding to each entity (for the query defining this dataset instance)
 
         Example:
-        [
-            ("Biden",),
-            ("Xi Jinping",),
-            ("Macron",),
-        ]
+        (
+            [
+                ("Biden",),
+                ("Xi Jinping",),
+                ("Macron",),
+            ],
+            [
+                "USA",
+                "China",
+                "France",
+            ]
+        )
         """
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
         entities: List[str] = self._read_entities(yago_qec)
+        answers: List[str] = yago_qec["answers"] * len(
+            self.entity_types
+        )  # TODO: this might be sketchy, since it assumes that
 
+        # check if all entity types have the same number of entities
+        if not all(len(yago_qec[t]) == len(yago_qec[self.entity_types[0]]) for t in self.entity_types):
+            raise ValueError(
+                f"Number of entities in each entity type must be the same, instead received lengths {[len(yago_qec[t]) for t in self.entity_types]} {self.entity_types}."
+            )
+
+        entities_and_answers: List[Tuple[str, str]] = list(zip(entities, answers))
         if self.max_entities is not None:
-            entities: List[str] = random.sample(entities, self.max_entities)
+            entities_and_answers: List[str] = random.sample(entities_and_answers, self.max_entities)
 
-        entities = [(e,) for e in entities]
+        entities: List[Tuple[str]] = [(e,) for e, _ in entities_and_answers]
+        answers: List[str] = [a for _, a in entities_and_answers]
 
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
         else:
             print(f"WARNING: No path provided, so will not try to save entities to path {self.entities_path}.")
 
-        return entities
+        if self.answers_path is not None:
+            self._save_to_json(answers, self.answers_path)
+        else:
+            print(f"WARNING: No path provided, so will not try to save answers to path {self.answers_path}.")
+
+        return entities, answers
+
+    # def build_entities_dataset(self) -> List[Tuple[str]]:
+    #     """
+    #     Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+
+    #     Example:
+    #     [
+    #         ("Biden",),
+    #         ("Xi Jinping",),
+    #         ("Macron",),
+    #     ]
+    #     """
+    #     if self.entities_path is None or self.answers_path is None or not os.path.isfile(self.entities_path) or not os.path.isfile(self.answers_path):
+    #         entities, _ = self.build_entities_and_answers_dataset()
+    #     else:
+    #         entities: List[Tuple[str]] = load_dataset_from_path(self.entities_path)
+    #     return entities
+
+    # def build_answers_dataset(self) -> List[str]:
+    #     """
+    #     Returns a list of the entities for a task, represented as a list of (single-element) tuples of strings
+
+    #     Example:
+    #     [
+    #         ("Biden",),
+    #         ("Xi Jinping",),
+    #         ("Macron",),
+    #     ]
+    #     """
+    #     if self.entities_path is None or self.answers_path is None or not os.path.isfile(self.entities_path) or not os.path.isfile(self.answers_path):
+    #         _, answers = self.build_entities_and_answers_dataset()
+    #     else:
+    #         answers: List[Tuple[str]] = load_dataset_from_path(self.answers_path)
+    #     return answers
 
     def build_contexts_dataset(self) -> List[str]:
         """

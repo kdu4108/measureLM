@@ -13,8 +13,8 @@ import numpy as np
 import wandb
 
 from measuring.estimate_probs import estimate_cmi
-from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ
-from preprocessing.utils import extract_name_from_yago_uri
+from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ, EntityContextQueryDataset
+from preprocessing.utils import extract_name_from_yago_uri, format_query
 
 
 def load_model_and_tokenizer(model_id, load_in_8bit, device):
@@ -88,6 +88,7 @@ def construct_paths_and_dataset_kwargs(
         cap_per_type=CAP_PER_TYPE,
         raw_data_path=RAW_DATA_PATH,
         ablate_out_relevant_contexts=ABLATE_OUT_RELEVANT_CONTEXTS,
+        overwrite=OVERWRITE,
     )
     if DATASET_NAME == "YagoECQ":
         DATASET_KWARGS_IDENTIFIABLE = {
@@ -145,6 +146,7 @@ def construct_paths_and_dataset_kwargs(
     entities_path = os.path.join(input_dir, "entities.json")
     contexts_path = os.path.join(input_dir, "contexts.json")
     queries_path = os.path.join(input_dir, "queries.json")
+    answers_path = os.path.join(input_dir, "answers.json")
     val_data_path = os.path.join(input_dir, "val.csv")
 
     DATASET_KWARGS_IDENTIFIABLE = {
@@ -153,6 +155,7 @@ def construct_paths_and_dataset_kwargs(
             entities_path=entities_path,
             contexts_path=contexts_path,
             queries_path=queries_path,
+            answers_path=answers_path,
         ),
     }
 
@@ -178,6 +181,7 @@ def construct_paths_and_dataset_kwargs(
         entities_path,
         contexts_path,
         queries_path,
+        answers_path,
         val_data_path,
         model_dir,
         results_dir,
@@ -225,6 +229,7 @@ def main():
         entities_path,
         contexts_path,
         queries_path,
+        answers_path,
         val_data_path,
         model_dir,
         results_dir,
@@ -248,7 +253,7 @@ def main():
         QUERY_TYPES=QUERY_TYPES,
     )
 
-    dataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
+    dataset: EntityContextQueryDataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
 
     # GPU stuff
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -293,6 +298,13 @@ def main():
             tokenizer=tokenizer,
             answer_map=None,
             bs=BATCH_SZ,
+            answer_entity=row["answer"],
+        ),
+        axis=1,
+    )
+    val_df_contexts_per_qe["full_query_example"] = val_df_contexts_per_qe.progress_apply(
+        lambda row: format_query(
+            query=row["query_form"], entity=row["entity"], context=row["contexts"][0], answer=row["answer"]
         ),
         axis=1,
     )

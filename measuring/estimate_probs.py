@@ -151,7 +151,14 @@ def sharded_score_model(
 
 
 def estimate_prob_next_word_given_x_and_entity(
-    query, entity: str, contexts: Set[str], model: GPTNeoXForCausalLM, tokenizer: AutoTokenizer, bs=32, answer_map=None
+    query,
+    entity: str,
+    contexts: Set[str],
+    model: GPTNeoXForCausalLM,
+    tokenizer: AutoTokenizer,
+    bs=32,
+    answer_map=None,
+    answer_entity: Optional[str] = None,
 ):
     """
     Args:
@@ -162,7 +169,7 @@ def estimate_prob_next_word_given_x_and_entity(
       samples - a list of torch longtensors of shape (num_samples, max_length) with length len(contexts)
       possible_outputs - a dict mapping from all observed outputs to its unique index.
     """
-    complete_queries = [format_query(query, entity, context) for context in contexts]
+    complete_queries = [format_query(query, entity, context, answer=answer_entity) for context in contexts]
 
     if tokenizer.padding_side != "left":
         raise ValueError(
@@ -200,6 +207,7 @@ def estimate_prob_y_given_context_and_entity(
     max_output_length=1,
     answer_map=None,
     bs=32,
+    answer_entity: Optional[str] = None,
 ):
     """
     Args:
@@ -224,7 +232,7 @@ def estimate_prob_y_given_context_and_entity(
             num_samples=num_samples,
             max_output_length=max_output_length,
             bs=bs,
-        )
+        )  # TODO: implement this to work for answer_entity
 
     return estimate_prob_next_word_given_x_and_entity(
         query=query,
@@ -234,6 +242,7 @@ def estimate_prob_y_given_context_and_entity(
         tokenizer=tokenizer,
         answer_map=answer_map,
         bs=bs,
+        answer_entity=answer_entity,
     )
 
 
@@ -254,7 +263,16 @@ def sample_y_given_x_and_entity(
     raise NotImplementedError()
 
 
-def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None, bs=32):
+def estimate_cmi(
+    query: str,
+    entity: str,
+    contexts: List[str],
+    model,
+    tokenizer,
+    answer_map: Dict[int, List[str]] = None,
+    bs: int = 32,
+    answer_entity: Optional[str] = None,
+):
     """
     Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
 
@@ -265,6 +283,15 @@ def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None, bs=
         (2) p(x | q[e])                                                , shape: (|X|,)
         (3) p(x, y | q[e]) = p(y | x, q[e]) * p(x | q[e])              , shape: (|X|, |Y|)
         (4) p(y | q[e]) = \sum_{x \in X} (p(y | x, q[e]) * p(x | q[e])), shape: (|Y|,) # noqa: W605
+
+    Args:
+        entity: str - the entity of interest
+        contexts: List[str] - list of contexts prepended to the query
+        model - the model to use for scoring
+        tokenizer - the tokenizer to use for tokenizing the contexts and query
+        answer_map - dict from the answer support (as an int) to the tokens which qualify into the respective answer.
+        bs - batch size to use for scoring the model
+        answer_entity - the entity representing the "answer" to a question. Formatted into closed queries.
     """
     contexts_counter = Counter(contexts)
     contexts_set = set(contexts)
@@ -278,6 +305,7 @@ def estimate_cmi(query, entity, contexts, model, tokenizer, answer_map=None, bs=
         tokenizer,
         answer_map=answer_map,
         bs=bs,
+        answer_entity=answer_entity,
     )  # shape: (|X|, |Y|)
 
     prob_x_y_given_e = np.einsum("ij, i -> ij", prob_y_given_context_and_entity, prob_x_given_e)  # shape: (|X|, |Y|)
