@@ -20,9 +20,13 @@ else:
     max_contexts = [500]
     max_entities = [100]
     query_ids = list(yago_qec.keys())
+    # query_ids = ["http://schema.org/founder"]
 
 entity_types = json.dumps(
     ["entities", "fake_entities"], separators=(",", ":")
+)  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+query_types = json.dumps(
+    ["closed", "open"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 cap_per_type = False
 ablate = False
@@ -53,6 +57,8 @@ for ds, rdp in dataset_names_and_rdps:
                                     f"{me}",
                                     "-ET",
                                     f"{entity_types}",
+                                    "-QT",
+                                    f"{query_types}",
                                 ]
                                 + (["-B"] if do_quantize else [])
                                 + (["-A"] if ablate else [])
@@ -71,6 +77,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     f"{mc}",
                                     f"{me}",
                                     f"{entity_types}",
+                                    f"{query_types}",
                                 ]
                                 + (["-B"] if do_quantize else [])
                                 + (["-A"] if ablate else [])
