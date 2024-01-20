@@ -1,11 +1,12 @@
 import argparse
 import gc
+import hashlib
 import json
 import random
 import os
 import sys
 from tqdm import tqdm
-from typing import List
+from typing import List, Dict
 
 from transformers import GPTNeoXForCausalLM, AutoTokenizer
 import torch
@@ -63,6 +64,9 @@ def get_args():
     )
     parser.add_argument("-ET", "--ENTITY_TYPES", type=json.loads, default=["entities"], help="Entity types to use")
     parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed"], help="Query types to use")
+    parser.add_argument(
+        "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
+    )
     return parser.parse_args()
 
 
@@ -80,6 +84,7 @@ def construct_paths_and_dataset_kwargs(
     OVERWRITE: bool,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
+    ANSWER_MAP: Dict[int, List[str]],
 ):
     SUBNAME = f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"  # TODO: probably need to fix this
     DATASET_KWARGS_IDENTIFIABLE = dict(
@@ -132,6 +137,12 @@ def construct_paths_and_dataset_kwargs(
     data_id += (
         "-QT_" + "_".join(DATASET_KWARGS_IDENTIFIABLE["query_types"])
         if "query_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["query_types"]
+        else ""
+    )
+
+    data_id += (
+        "-AM_" + hashlib.sha256(json.dumps(ANSWER_MAP, sort_keys=True).encode()).hexdigest()[:8]
+        if ANSWER_MAP is not None
         else ""
     )
 
@@ -204,9 +215,11 @@ def main():
     MAX_ENTITIES = args.MAX_ENTITIES
     CAP_PER_TYPE = args.CAP_PER_TYPE
     ABLATE_OUT_RELEVANT_CONTEXTS = args.ABLATE_OUT_RELEVANT_CONTEXTS
-    OVERWRITE = args.OVERWRITE
+    # OVERWRITE = args.OVERWRITE
+    OVERWRITE = True
     ENTITY_TYPES = args.ENTITY_TYPES
     QUERY_TYPES = args.QUERY_TYPES
+    ANSWER_MAP = args.ANSWER_MAP if args.ANSWER_MAP else None
 
     # Model parameters
     BATCH_SZ = 16
@@ -251,6 +264,7 @@ def main():
         OVERWRITE=OVERWRITE,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
+        ANSWER_MAP=ANSWER_MAP,
     )
 
     dataset: EntityContextQueryDataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
@@ -287,6 +301,7 @@ def main():
         run.log_artifact(artifact)
 
     model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
+    answer_map_tensor = {k: torch.tensor(v, device=model.device) for k, v in ANSWER_MAP.items()}
 
     tqdm.pandas()
     val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe.progress_apply(
@@ -296,7 +311,7 @@ def main():
             contexts=row["contexts"],
             model=model,
             tokenizer=tokenizer,
-            answer_map=None,
+            answer_map=answer_map_tensor,
             bs=BATCH_SZ,
             answer_entity=row["answer"],
         ),
