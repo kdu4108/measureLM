@@ -219,7 +219,7 @@ def main():
     OVERWRITE = True
     ENTITY_TYPES = args.ENTITY_TYPES
     QUERY_TYPES = args.QUERY_TYPES
-    ANSWER_MAP = args.ANSWER_MAP if args.ANSWER_MAP else None
+    ANSWER_MAP = {int(k): v for k, v in args.ANSWER_MAP.items()} if args.ANSWER_MAP else None
 
     # Model parameters
     BATCH_SZ = 16
