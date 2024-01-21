@@ -23,7 +23,7 @@ else:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
     max_contexts = [500]
     max_entities = [100]
-    query_ids = list(yago_qec.keys())[:1]
+    query_ids = list(yago_qec.keys())
     # query_ids = ["http://schema.org/founder"]
 
 entity_types = json.dumps(
