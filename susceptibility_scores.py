@@ -8,6 +8,7 @@ import sys
 from tqdm import tqdm
 from typing import List, Dict
 
+import pandas as pd
 from transformers import GPTNeoXForCausalLM, AutoTokenizer
 import torch
 import numpy as np
@@ -325,30 +326,35 @@ def main():
         artifact.add_dir(local_path=data_dir)
         run.log_artifact(artifact)
 
-    model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
-    answer_map_tensor = {k: torch.tensor(v, device=model.device) for k, v in ANSWER_MAP.items()}
+    if not os.path.exists(val_results_path) or OVERWRITE:
+        print("Computing susceptibility scores.")
+        model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
+        answer_map_tensor = {k: torch.tensor(v, device=model.device) for k, v in ANSWER_MAP.items()}
 
-    tqdm.pandas()
-    val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe.progress_apply(
-        lambda row: estimate_cmi(
-            query=row["query_form"],
-            entity=row["entity"],
-            contexts=row["contexts"],
-            model=model,
-            tokenizer=tokenizer,
-            answer_map=answer_map_tensor,
-            bs=BATCH_SZ,
-            answer_entity=row["answer"],
-        ),
-        axis=1,
-    )
-    val_df_contexts_per_qe["full_query_example"] = val_df_contexts_per_qe.progress_apply(
-        lambda row: format_query(
-            query=row["query_form"], entity=row["entity"], context=row["contexts"][0], answer=row["answer"]
-        ),
-        axis=1,
-    )
-    val_df_contexts_per_qe.to_csv(val_results_path)
+        tqdm.pandas()
+        val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe.progress_apply(
+            lambda row: estimate_cmi(
+                query=row["query_form"],
+                entity=row["entity"],
+                contexts=row["contexts"],
+                model=model,
+                tokenizer=tokenizer,
+                answer_map=answer_map_tensor,
+                bs=BATCH_SZ,
+                answer_entity=row["answer"],
+            ),
+            axis=1,
+        )
+        val_df_contexts_per_qe["full_query_example"] = val_df_contexts_per_qe.progress_apply(
+            lambda row: format_query(
+                query=row["query_form"], entity=row["entity"], context=row["contexts"][0], answer=row["answer"]
+            ),
+            axis=1,
+        )
+        val_df_contexts_per_qe.to_csv(val_results_path)
+    else:
+        print("Loading cached results from disk.")
+        val_df_contexts_per_qe = pd.read_csv(val_results_path)
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     if LOG_DATASETS:
