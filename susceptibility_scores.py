@@ -56,6 +56,13 @@ def get_args():
     parser.add_argument(
         "-A", "--ABLATE_OUT_RELEVANT_CONTEXTS", action="store_true", help="Whether to ablate out relevant contexts"
     )
+    parser.add_argument("-D", "--DEDUPLICATE_ENTITIES", action="store_true", help="Whether to deduplicate the entities")
+    parser.add_argument(
+        "-U",
+        "--UNIFORM_CONTEXTS",
+        action="store_true",
+        help="Whether to enforce that each entity is uniformly represented across the contexts",
+    )
     parser.add_argument(
         "-O",
         "--OVERWRITE",
@@ -81,6 +88,8 @@ def construct_paths_and_dataset_kwargs(
     MAX_ENTITIES: int,
     CAP_PER_TYPE: bool,
     ABLATE_OUT_RELEVANT_CONTEXTS: bool,
+    DEDUPLICATE_ENTITIES: bool,
+    UNIFORM_CONTEXTS: bool,
     OVERWRITE: bool,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
@@ -93,6 +102,8 @@ def construct_paths_and_dataset_kwargs(
         cap_per_type=CAP_PER_TYPE,
         raw_data_path=RAW_DATA_PATH,
         ablate_out_relevant_contexts=ABLATE_OUT_RELEVANT_CONTEXTS,
+        uniform_contexts=UNIFORM_CONTEXTS,
+        deduplicate_entities=DEDUPLICATE_ENTITIES,
         overwrite=OVERWRITE,
     )
     if DATASET_NAME == "YagoECQ":
@@ -125,6 +136,16 @@ def construct_paths_and_dataset_kwargs(
         "-ablate"
         if "ablate_out_relevant_contexts" in DATASET_KWARGS_IDENTIFIABLE
         and DATASET_KWARGS_IDENTIFIABLE["ablate_out_relevant_contexts"]
+        else ""
+    )
+    data_id += (
+        "-uniformcontexts"
+        if "uniform_contexts" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["uniform_contexts"]
+        else ""
+    )
+    data_id += (
+        "-dedupeentities"
+        if "deduplicate_entities" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["deduplicate_entities"]
         else ""
     )
 
@@ -215,6 +236,8 @@ def main():
     MAX_ENTITIES = args.MAX_ENTITIES
     CAP_PER_TYPE = args.CAP_PER_TYPE
     ABLATE_OUT_RELEVANT_CONTEXTS = args.ABLATE_OUT_RELEVANT_CONTEXTS
+    UNIFORM_CONTEXTS = args.UNIFORM_CONTEXTS
+    DEDUPLICATE_ENTITIES = args.DEDUPLICATE_ENTITIES
     # OVERWRITE = args.OVERWRITE
     OVERWRITE = True
     ENTITY_TYPES = args.ENTITY_TYPES
@@ -261,6 +284,8 @@ def main():
         MAX_ENTITIES=MAX_ENTITIES,
         CAP_PER_TYPE=CAP_PER_TYPE,
         ABLATE_OUT_RELEVANT_CONTEXTS=ABLATE_OUT_RELEVANT_CONTEXTS,
+        UNIFORM_CONTEXTS=UNIFORM_CONTEXTS,
+        DEDUPLICATE_ENTITIES=DEDUPLICATE_ENTITIES,
         OVERWRITE=OVERWRITE,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,

@@ -686,6 +686,8 @@ class YagoECQ(EntityContextQueryDataset):
         max_contexts: int = None,
         cap_per_type: bool = False,
         ablate_out_relevant_contexts: bool = False,
+        uniform_contexts: bool = False,
+        deduplicate_entities: bool = False,
         seed: Optional[int] = None,
         raw_data_path: Optional[str] = "../data/YagoECQ/yago_qec.json",
         overwrite: bool = False,
@@ -718,6 +720,9 @@ class YagoECQ(EntityContextQueryDataset):
 
         self.cap_per_type = cap_per_type
         self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
+        self.uniform_contexts = uniform_contexts
+        self.deduplicate_entities = deduplicate_entities
+
         self.load_or_build_entities_contexts_and_queries(
             entities_path=entities_path,
             queries_path=queries_path,
@@ -767,6 +772,16 @@ class YagoECQ(EntityContextQueryDataset):
             )
 
         entities_and_answers: List[Tuple[str, str]] = list(zip(entities, answers))
+
+        if self.deduplicate_entities:
+            # Deduplicate rows where the same entity appears multiple times
+            entities_and_answers = list(
+                pd.DataFrame(entities_and_answers, columns=["entities", "answers"])
+                .groupby("entities")
+                .agg("sample")
+                .itertuples(name=None, index=False)
+            )
+
         if self.max_entities is not None:
             entities_and_answers: List[str] = random.sample(entities_and_answers, self.max_entities)
 
@@ -835,7 +850,7 @@ class YagoECQ(EntityContextQueryDataset):
         answers: List[str] = yago_qec["answers"]
         context_templates: List[str] = yago_qec["context_templates"]
 
-        contexts: List[str] = []
+        context_per_entity_per_answer: List[str] = []
         for entity in entities:
             if (self.ablate_out_relevant_contexts and (entity,) not in self.entities) or (
                 not self.ablate_out_relevant_contexts and (entity,) in self.entities
@@ -845,10 +860,21 @@ class YagoECQ(EntityContextQueryDataset):
                 # self.entities is a list of single-element tuples
                 for answer in answers:
                     for context_template in context_templates:
-                        contexts.append(context_template.format(entity=entity, answer=answer))
+                        context_per_entity_per_answer.append(
+                            (entity, answer, context_template.format(entity=entity, answer=answer))
+                        )
 
+        contexts: List[str] = [c for _, _, c in context_per_entity_per_answer]
         if self.max_contexts is not None:
-            contexts = random.sample(contexts, self.max_contexts)
+            if self.uniform_contexts:
+                contexts = (
+                    pd.DataFrame(context_per_entity_per_answer, columns=["entity", "answer", "context"])
+                    .groupby("entity")
+                    .sample(n=self.max_contexts // len(self.entities))["context"]
+                    .tolist()
+                )
+            else:
+                contexts = random.sample(contexts, self.max_contexts)
 
         if self.contexts_path is not None:
             self._save_to_json(contexts, self.contexts_path)
