@@ -329,7 +329,9 @@ def main():
     if not os.path.exists(val_results_path) or OVERWRITE:
         print("Computing susceptibility scores.")
         model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
-        answer_map_tensor = {k: torch.tensor(v, device=model.device) for k, v in ANSWER_MAP.items()}
+        answer_map_tensor = (
+            {k: torch.tensor(v, device=model.device) for k, v in ANSWER_MAP.items()} if ANSWER_MAP is not None else None
+        )
 
         tqdm.pandas()
         val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe.progress_apply(
