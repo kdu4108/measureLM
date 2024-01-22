@@ -26,17 +26,21 @@ else:
     query_ids = list(yago_qec.keys())
     # query_ids = ["http://schema.org/founder"]
 
+# entity_types = json.dumps(
+#     ["entities", "fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 entity_types = json.dumps(
-    ["entities", "fake_entities"], separators=(",", ":")
+    ["entities", "gpt_fake_entities"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 # query_types = json.dumps(
 #     ["closed", "open"], separators=(",", ":")
 # )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 query_types = json.dumps(
-    ["closed"], separators=(",", ":")
+    ["closed", "open"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 
-answer_map = {0: [" No", " no", " NO", "No", "no", "NO"], 1: [" Yes", " yes", " YES", "Yes", "yes", "YES"]}
+answer_map = dict()
+# answer_map = {0: [" No", " no", " NO", "No", "no", "NO"], 1: [" Yes", " yes", " YES", "Yes", "yes", "YES"]}
 
 cap_per_type = False
 ablate = False
