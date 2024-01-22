@@ -714,7 +714,7 @@ class YagoECQ(EntityContextQueryDataset):
             raise ValueError(f"query_types must be subset of {valid_query_types}, instead received {query_types}.")
 
         self.entity_types = entity_types
-        valid_entity_types = {"entities", "fake_entities"}
+        valid_entity_types = {"entities", "fake_entities", "gpt_fake_entities"}
         if not set(self.entity_types).issubset(valid_entity_types):
             raise ValueError(f"entity_types must be subset of {valid_entity_types}, instead received {entity_types}.")
 
