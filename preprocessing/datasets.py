@@ -734,8 +734,10 @@ class YagoECQ(EntityContextQueryDataset):
     def _read_entities(self, yago_qec: dict) -> List[str]:
         """Helper to read the eligible entities from yago_qec"""
         # return yago_qec["entities"] # only real entities
+        # TODO: remove this hack for handling entity types having different number of entities (we should enforce an equal number of each entity type)
+        min_length = min([len(yago_qec[t]) for t in self.entity_types])
         return list(
-            itertools.chain.from_iterable([yago_qec[t] for t in self.entity_types])
+            itertools.chain.from_iterable([yago_qec[t][:min_length] for t in self.entity_types])
         )  # return entities of all types in self.entity_types
 
     def build_entities_and_answers_dataset(self) -> Tuple[List[Tuple[str]], List[str]]:
@@ -760,16 +762,20 @@ class YagoECQ(EntityContextQueryDataset):
         )
         """
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
-        entities: List[str] = self._read_entities(yago_qec)
-        answers: List[str] = yago_qec["answers"] * len(
-            self.entity_types
-        )  # TODO: this might be sketchy, since it assumes that
-
         # check if all entity types have the same number of entities
         if not all(len(yago_qec[t]) == len(yago_qec[self.entity_types[0]]) for t in self.entity_types):
-            raise ValueError(
-                f"Number of entities in each entity type must be the same, instead received lengths {[len(yago_qec[t]) for t in self.entity_types]} {self.entity_types}."
+            print(
+                f"Number of entities in each entity type must be the same, instead received lengths {[len(yago_qec[t]) for t in self.entity_types]} {self.entity_types}. Truncating entity size per type to be {min([len(yago_qec[t]) for t in self.entity_types])}"
             )
+            # raise ValueError(
+            #     f"Number of entities in each entity type must be the same, instead received lengths {[len(yago_qec[t]) for t in self.entity_types]} {self.entity_types}."
+            # )
+
+        entities: List[str] = self._read_entities(yago_qec)
+        num_entities_per_type = len(entities) // len(self.entity_types)
+        answers: List[str] = yago_qec["answers"][:num_entities_per_type] * len(
+            self.entity_types
+        )  # TODO: this might be sketchy, since it assumes that
 
         entities_and_answers: List[Tuple[str, str]] = list(zip(entities, answers))
 
