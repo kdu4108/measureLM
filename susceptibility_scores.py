@@ -70,7 +70,9 @@ def get_args():
         action="store_true",
         help="Whether to overwrite existing results and recompute susceptibility scores",
     )
-    parser.add_argument("-ET", "--ENTITY_TYPES", type=json.loads, default=["entities"], help="Entity types to use")
+    parser.add_argument(
+        "-ET", "--ENTITY_TYPES", type=json.loads, default=["entities", "gpt_fake_entities"], help="Entity types to use"
+    )
     parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed"], help="Query types to use")
     parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
