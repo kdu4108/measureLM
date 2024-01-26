@@ -1,0 +1,1680 @@
+{
+    "http://schema.org/about": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Event",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Event",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/actor": [
+        [
+            "http://schema.org/CreativeWork"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/address": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/administrates": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/affiliation": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/alternateName": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Taxon",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/alumniOf": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/area": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://schema.org/author": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/award": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://schema.org/birthDate": [
+        [
+            "http://schema.org/Person"
+        ],
+        []
+    ],
+    "http://schema.org/birthPlace": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/children": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/contentLocation": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/dateCreated": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/deathDate": [
+        [
+            "http://schema.org/Person"
+        ],
+        []
+    ],
+    "http://schema.org/deathPlace": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/demonym": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/director": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/dissolutionDate": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/duns": [
+        [
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/duration": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/editor": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/elevation": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://schema.org/endDate": [
+        [
+            "http://schema.org/Event"
+        ],
+        []
+    ],
+    "http://schema.org/founder": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/gender": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://schema.org/geo": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/gtin": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/highestPoint": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "http://schema.org/homeLocation": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/humanDevelopmentIndex": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/iataCode": [
+        [
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/icaoCode": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://schema.org/illustrator": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/inLanguage": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://schema.org/influencedBy": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/isbn": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/iswcCode": [
+        [
+            "http://schema.org/CreativeWork"
+        ],
+        []
+    ],
+    "http://schema.org/knowsLanguage": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://schema.org/leader": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/leiCode": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/location": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/locationCreated": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/lowestPoint": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "http://schema.org/lyricist": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/mainEntityOfPage": [
+        [
+            "http://schema.org/Taxon",
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/manufacturer": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/material": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "http://schema.org/memberOf": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/motto": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/musicBy": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/nationality": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/neighbors": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/numberOfEmployees": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/numberOfEpisodes": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/numberOfPages": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/numberOfSeasons": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/officialLanguage": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://schema.org/organizer": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/ownedBy": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/owns": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/parentTaxon": [
+        [
+            "http://schema.org/Taxon"
+        ],
+        [
+            "http://schema.org/Taxon"
+        ]
+    ],
+    "http://schema.org/performer": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/populationNumber": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/postalCode": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/productionCompany": [
+        [
+            "http://schema.org/CreativeWork"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/publisher": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/recordLabel": [
+        [
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/sameAs": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Event",
+            "http://schema.org/Product"
+        ],
+        []
+    ],
+    "http://schema.org/sponsor": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://schema.org/spouse": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://schema.org/startDate": [
+        [
+            "http://schema.org/Event"
+        ],
+        []
+    ],
+    "http://schema.org/superEvent": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "http://schema.org/unemploymentRate": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/url": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://schema.org/worksFor": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/academicDegree": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/appearsIn": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/beliefSystem": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/candidateIn": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/capital": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/conferredBy": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/consumes": [
+        [
+            "http://schema.org/Taxon"
+        ],
+        [
+            "http://schema.org/Taxon"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/director": [
+        [
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/distanceFromEarth": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/doctoralAdvisor": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/flowsInto": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/follows": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/length": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/luminosity": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/mass": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/notableWork": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/parallax": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/parentBody": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/participant": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/playsIn": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/radialVelocity": [
+        [
+            "http://schema.org/Place"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/replaces": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/sportNumber": [
+        [
+            "http://schema.org/Person"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/studentOf": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "http://yago-knowledge.org/resource/studentsCount": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        []
+    ],
+    "http://yago-knowledge.org/resource/terminus": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/about": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Event",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Event",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/actor": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork"
+        ]
+    ],
+    "reverse-http://schema.org/address": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/administrates": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/affiliation": [
+        [
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/alternateName": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Taxon",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/alumniOf": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/area": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://schema.org/author": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/award": [
+        [
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/birthDate": [
+        [],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/birthPlace": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/children": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/contentLocation": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/dateCreated": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/deathDate": [
+        [],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/deathPlace": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/demonym": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/director": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/dissolutionDate": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/duns": [
+        [],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/duration": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/editor": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/elevation": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://schema.org/endDate": [
+        [],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://schema.org/founder": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/gender": [
+        [
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/geo": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/gtin": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/highestPoint": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/homeLocation": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/humanDevelopmentIndex": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/iataCode": [
+        [],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/icaoCode": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://schema.org/illustrator": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/inLanguage": [
+        [
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/influencedBy": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/isbn": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/iswcCode": [
+        [],
+        [
+            "http://schema.org/CreativeWork"
+        ]
+    ],
+    "reverse-http://schema.org/knowsLanguage": [
+        [
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/leader": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/leiCode": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/location": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/locationCreated": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/lowestPoint": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/lyricist": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/mainEntityOfPage": [
+        [],
+        [
+            "http://schema.org/Taxon",
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/manufacturer": [
+        [
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/material": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/memberOf": [
+        [
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/motto": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/musicBy": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/nationality": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/neighbors": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/numberOfEmployees": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/numberOfEpisodes": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/numberOfPages": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/numberOfSeasons": [
+        [],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/officialLanguage": [
+        [
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/organizer": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://schema.org/ownedBy": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/owns": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/parentTaxon": [
+        [
+            "http://schema.org/Taxon"
+        ],
+        [
+            "http://schema.org/Taxon"
+        ]
+    ],
+    "reverse-http://schema.org/performer": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/populationNumber": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/postalCode": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/productionCompany": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork"
+        ]
+    ],
+    "reverse-http://schema.org/publisher": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/recordLabel": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/sameAs": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Event",
+            "http://schema.org/Product"
+        ]
+    ],
+    "reverse-http://schema.org/sponsor": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://schema.org/spouse": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://schema.org/startDate": [
+        [],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://schema.org/superEvent": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://schema.org/unemploymentRate": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/url": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Person",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://schema.org/worksFor": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/academicDegree": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/appearsIn": [
+        [
+            "http://schema.org/CreativeWork"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/beliefSystem": [
+        [
+            "http://schema.org/Intangible"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/candidateIn": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/capital": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/conferredBy": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product",
+            "http://schema.org/Intangible"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/consumes": [
+        [
+            "http://schema.org/Taxon"
+        ],
+        [
+            "http://schema.org/Taxon"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/director": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/distanceFromEarth": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/doctoralAdvisor": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/flowsInto": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/follows": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/length": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/luminosity": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/mass": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/notableWork": [
+        [
+            "http://schema.org/CreativeWork",
+            "http://schema.org/Product"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/parallax": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/parentBody": [
+        [
+            "http://schema.org/Place"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/participant": [
+        [
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Event"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/playsIn": [
+        [
+            "http://schema.org/Event"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/radialVelocity": [
+        [],
+        [
+            "http://schema.org/Place"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/replaces": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/sportNumber": [
+        [],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/studentOf": [
+        [
+            "http://schema.org/Person"
+        ],
+        [
+            "http://schema.org/Person"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/studentsCount": [
+        [],
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ]
+    ],
+    "reverse-http://yago-knowledge.org/resource/terminus": [
+        [
+            "http://schema.org/Place",
+            "http://schema.org/Organization"
+        ],
+        [
+            "http://schema.org/Place"
+        ]
+    ]
+}
