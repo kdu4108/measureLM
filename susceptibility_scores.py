@@ -65,6 +65,13 @@ def get_args():
         help="Whether to enforce that each entity is uniformly represented across the contexts",
     )
     parser.add_argument(
+        "-ES",
+        "--ENTITY_SELECTION_FUNC_NAME",
+        type=str,
+        default="random_sample",
+        help="Name of the entity selection function name. Must be one of the functions in preprocessing.utils",
+    )
+    parser.add_argument(
         "-O",
         "--OVERWRITE",
         action="store_true",
@@ -93,6 +100,7 @@ def construct_paths_and_dataset_kwargs(
     ABLATE_OUT_RELEVANT_CONTEXTS: bool,
     DEDUPLICATE_ENTITIES: bool,
     UNIFORM_CONTEXTS: bool,
+    ENTITY_SELECTION_FUNC_NAME: str,
     OVERWRITE: bool,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
@@ -107,6 +115,7 @@ def construct_paths_and_dataset_kwargs(
         ablate_out_relevant_contexts=ABLATE_OUT_RELEVANT_CONTEXTS,
         uniform_contexts=UNIFORM_CONTEXTS,
         deduplicate_entities=DEDUPLICATE_ENTITIES,
+        entity_selection_func_name=ENTITY_SELECTION_FUNC_NAME,
         overwrite=OVERWRITE,
     )
     if DATASET_NAME == "YagoECQ":
@@ -161,6 +170,13 @@ def construct_paths_and_dataset_kwargs(
     data_id += (
         "-QT_" + "_".join(DATASET_KWARGS_IDENTIFIABLE["query_types"])
         if "query_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["query_types"]
+        else ""
+    )
+
+    data_id += (
+        f"-ES_{DATASET_KWARGS_IDENTIFIABLE['entity_selection_func_name']}"
+        if "entity_selection_func_name" in DATASET_KWARGS_IDENTIFIABLE
+        and DATASET_KWARGS_IDENTIFIABLE["entity_selection_func_name"] is not None
         else ""
     )
 
@@ -241,6 +257,7 @@ def main():
     ABLATE_OUT_RELEVANT_CONTEXTS = args.ABLATE_OUT_RELEVANT_CONTEXTS
     UNIFORM_CONTEXTS = args.UNIFORM_CONTEXTS
     DEDUPLICATE_ENTITIES = args.DEDUPLICATE_ENTITIES
+    ENTITY_SELECTION_FUNC_NAME = args.ENTITY_SELECTION_FUNC_NAME
     OVERWRITE = args.OVERWRITE
     ENTITY_TYPES = args.ENTITY_TYPES
     QUERY_TYPES = args.QUERY_TYPES
@@ -288,6 +305,7 @@ def main():
         ABLATE_OUT_RELEVANT_CONTEXTS=ABLATE_OUT_RELEVANT_CONTEXTS,
         UNIFORM_CONTEXTS=UNIFORM_CONTEXTS,
         DEDUPLICATE_ENTITIES=DEDUPLICATE_ENTITIES,
+        ENTITY_SELECTION_FUNC_NAME=ENTITY_SELECTION_FUNC_NAME,
         OVERWRITE=OVERWRITE,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,

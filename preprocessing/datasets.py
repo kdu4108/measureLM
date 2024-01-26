@@ -5,10 +5,12 @@ import pickle
 import itertools
 import json
 import random
+import sys
+
 import torch
 from tqdm import tqdm
 from typing import Optional, Dict, List, Any, Tuple
-from preprocessing.utils import format_query
+from preprocessing.utils import format_query, random_sample, top_entity_namesake_degree, top_entity_uri_degree
 
 QueryID = str
 
@@ -688,6 +690,7 @@ class YagoECQ(EntityContextQueryDataset):
         ablate_out_relevant_contexts: bool = False,
         uniform_contexts: bool = False,
         deduplicate_entities: bool = False,
+        entity_selection_func_name: str = "random_sample",
         seed: Optional[int] = None,
         raw_data_path: Optional[str] = "../data/YagoECQ/yago_qec.json",
         overwrite: bool = False,
@@ -722,6 +725,7 @@ class YagoECQ(EntityContextQueryDataset):
         self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
         self.uniform_contexts = uniform_contexts
         self.deduplicate_entities = deduplicate_entities
+        self.entity_selection_func = getattr(sys.modules[__name__], entity_selection_func_name)
 
         self.load_or_build_entities_contexts_and_queries(
             entities_path=entities_path,
@@ -789,7 +793,9 @@ class YagoECQ(EntityContextQueryDataset):
             )
 
         if self.max_entities is not None:
-            entities_and_answers: List[str] = random.sample(entities_and_answers, self.max_entities)
+            entities_and_answers: List[str] = self.entity_selection_func(
+                entities_and_answers, yago_qec, self.max_entities
+            )
 
         entities: List[Tuple[str]] = [(e,) for e, _ in entities_and_answers]
         answers: List[str] = [a for _, a in entities_and_answers]

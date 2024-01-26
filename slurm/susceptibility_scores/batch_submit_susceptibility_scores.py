@@ -26,6 +26,8 @@ else:
     query_ids = list(yago_qec.keys())
     # query_ids = ["http://schema.org/founder"]
 
+ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree", "random_sample"]
+
 # entity_types = json.dumps(
 #     ["entities", "fake_entities"], separators=(",", ":")
 # )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
@@ -82,58 +84,62 @@ for ds, rdp in dataset_names_and_rdps:
             for qid in query_ids:
                 for mc in max_contexts:
                     for me in max_entities:
-                        if RUN_LOCALLY:
-                            subprocess.run(
-                                [
-                                    "python",
-                                    "susceptibility_scores.py",
-                                    f"{ds}",
-                                    "-P",
-                                    rdp,
-                                    "-S",
-                                    f"{seed}",
-                                    "-M",
-                                    f"{model_id}",
-                                    "-Q",
-                                    f"{qid}",
-                                    "-MC",
-                                    f"{mc}",
-                                    "-ME",
-                                    f"{me}",
-                                    "-ET",
-                                    f"{entity_types}",
-                                    "-QT",
-                                    f"{query_types}",
-                                    "-AM",
-                                    f"{answer_map_in_tokens}",
-                                ]
-                                + (["-B"] if do_quantize else [])
-                                + (["-A"] if ablate else [])
-                                + (["-T"] if cap_per_type else [])
-                                + (["-D"] if deduplicate_entities else [])
-                                + (["-U"] if uniform_contexts else [])
-                            )
-                        else:
-                            cmd = (
-                                [
-                                    "sbatch",
-                                    "slurm/susceptibility_scores/submit_susceptibility_score.cluster",
-                                    f"{ds}",
-                                    f"{rdp}",
-                                    f"{seed}",
-                                    f"{model_id}",
-                                    f"{qid}",
-                                    f"{mc}",
-                                    f"{me}",
-                                    f"{entity_types}",
-                                    f"{query_types}",
-                                    f"{answer_map_in_tokens}",
-                                ]
-                                + (["-B"] if do_quantize else [])
-                                + (["-A"] if ablate else [])
-                                + (["-T"] if cap_per_type else [])
-                                + (["-D"] if deduplicate_entities else [])
-                                + (["-U"] if uniform_contexts else [])
-                            )
-                            print(cmd)
-                            subprocess.check_call(cmd)
+                        for es in ent_selection_fns:
+                            if RUN_LOCALLY:
+                                subprocess.run(
+                                    [
+                                        "python",
+                                        "susceptibility_scores.py",
+                                        f"{ds}",
+                                        "-P",
+                                        rdp,
+                                        "-S",
+                                        f"{seed}",
+                                        "-M",
+                                        f"{model_id}",
+                                        "-Q",
+                                        f"{qid}",
+                                        "-MC",
+                                        f"{mc}",
+                                        "-ME",
+                                        f"{me}",
+                                        "-ET",
+                                        f"{entity_types}",
+                                        "-QT",
+                                        f"{query_types}",
+                                        "-AM",
+                                        f"{answer_map_in_tokens}",
+                                        "-ES",
+                                        f"{es}",
+                                    ]
+                                    + (["-B"] if do_quantize else [])
+                                    + (["-A"] if ablate else [])
+                                    + (["-T"] if cap_per_type else [])
+                                    + (["-D"] if deduplicate_entities else [])
+                                    + (["-U"] if uniform_contexts else [])
+                                )
+                            else:
+                                cmd = (
+                                    [
+                                        "sbatch",
+                                        "slurm/susceptibility_scores/submit_susceptibility_score.cluster",
+                                        f"{ds}",
+                                        f"{rdp}",
+                                        f"{seed}",
+                                        f"{model_id}",
+                                        f"{qid}",
+                                        f"{mc}",
+                                        f"{me}",
+                                        f"{entity_types}",
+                                        f"{query_types}",
+                                        f"{answer_map_in_tokens}",
+                                        f"{es}",
+                                    ]
+                                    + (["-B"] if do_quantize else [])
+                                    + (["-A"] if ablate else [])
+                                    + (["-T"] if cap_per_type else [])
+                                    + (["-D"] if deduplicate_entities else [])
+                                    + (["-U"] if uniform_contexts else [])
+                                )
+                                print(cmd)
+                                subprocess.check_call(cmd)
