@@ -312,8 +312,6 @@ def main():
         ANSWER_MAP=ANSWER_MAP,
     )
 
-    dataset: EntityContextQueryDataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
-
     # GPU stuff
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
@@ -332,6 +330,7 @@ def main():
     )
     print(dict(wandb.config))
 
+    dataset: EntityContextQueryDataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
     val_df_contexts_per_qe = dataset.get_contexts_per_query_entity_df()
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B

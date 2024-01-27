@@ -48,6 +48,7 @@ cap_per_type = False
 ablate = False
 deduplicate_entities = True
 uniform_contexts = True
+overwrite = True
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:
@@ -117,6 +118,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-O"] if overwrite else [])
                                 )
                             else:
                                 cmd = (
@@ -140,6 +142,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-O"] if overwrite else [])
                                 )
                                 print(cmd)
                                 subprocess.check_call(cmd)
