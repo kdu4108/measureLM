@@ -519,152 +519,213 @@ yago_topic_to_qfs = {
             "Q: Is '{answer}' the motto of {entity}?\nA:",
         ],
         "open": ["Q: What is {entity}'s motto?\nA:", "{entity}'s motto is"],
-    },  # STOP HERE
-    # "http://schema.org/musicBy": {
-    #     "closed": [
-    #         "Q: Is {entity} attributed to {answer} as its music creator?\nA:",
-    #         "Q: Does {answer} credit {entity} as the music creator?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: Who created the music for {entity}?\nA:",
-    #         "The music for {entity} is by",
-    #     ],
-    # },
-    # "http://schema.org/nationality": {
-    #     "closed": [
-    #         "Q: Is {entity}'s nationality {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s nationality?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s nationality?\nA:",
-    #         "{entity}'s nationality is",
-    #     ],
-    # },
-    # "http://schema.org/neighbors": {
-    #     "closed": [
-    #         "Q: Are {entity} and {answer} neighbors?\nA:",
-    #         "Q: Does {answer} list {entity} as one of its neighbors?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: Who are the neighbors of {entity}?\nA:",
-    #         "{entity} has neighbors including",
-    #     ],
-    # },
-    # "http://schema.org/numberOfEmployees": {
-    #     "closed": [
-    #         "Q: Does {entity} have {answer} employees?\nA:",
-    #         "Q: Is {answer} the number of employees for {entity}?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: How many employees does {entity} have?\nA:",
-    #         "{entity} has a total of",
-    #     ],
-    # },
-    # "http://schema.org/numberOfEpisodes": {
-    #     "closed": [
-    #         "Q: Does {entity} have {answer} episodes?\nA:",
-    #         "Q: Is {answer} the number of episodes for {entity}?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: How many episodes does {entity} have?\nA:",
-    #         "{entity} has a total of",
-    #     ],
-    # },
-    # "http://schema.org/numberOfPages": {
-    #     "closed": [
-    #         "Q: Does {entity} have {answer} pages?\nA:",
-    #         "Q: Is {answer} the number of pages for {entity}?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: How many pages does {entity} have?\nA:",
-    #         "{entity} has a total of",
-    #     ],
-    # },
-    # "http://schema.org/numberOfSeasons": {
-    #     "closed": [
-    #         "Q: Does {entity} have {answer} seasons?\nA:",
-    #         "Q: Is {answer} the number of seasons for {entity}?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: How many seasons does {entity} have?\nA:",
-    #         "{entity} has a total of",
-    #     ],
-    # },
-    # "http://schema.org/officialLanguage": {
-    #     "closed": [
-    #         "Q: Is {entity}'s official language {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s official language?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s official language?\nA:",
-    #         "{entity}'s official language is",
-    #     ],
-    # },
-    # "http://schema.org/organizer": {
-    #     "closed": [
-    #         "Q: Is {entity} organized by {answer}?\nA:",
-    #         "Q: Does {answer} serve as the organizer for {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: Who organizes {entity}?\nA:", "{entity} is organized by"],
-    # },
-    # "http://schema.org/ownedBy": {
-    #     "closed": [
-    #         "Q: Is {entity} owned by {answer}?\nA:",
-    #         "Q: Does {answer} own {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: Who owns {entity}?\nA:", "{entity} is owned by"],
-    # },
-    # "http://schema.org/owns": {
-    #     "closed": [
-    #         "Q: Does {entity} own {answer}?\nA:",
-    #         "Q: Is {answer} owned by {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: What does {entity} own?\nA:", "{entity} owns"],
-    # },
-    # "http://schema.org/parentTaxon": {
-    #     "closed": [
-    #         "Q: Is {entity} a parent taxon of {answer}?\nA:",
-    #         "Q: Does {answer} have {entity} as a parent taxon?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is the parent taxon of {answer}?\nA:",
-    #         "{entity} is a parent taxon of",
-    #     ],
-    # },
-    # "http://schema.org/performer": {
-    #     "closed": [
-    #         "Q: Is {entity} a performer for {answer}?\nA:",
-    #         "Q: Does {answer} list {entity} as a performer?\nA:",
-    #     ],
-    #     "open": ["Q: Who performs for {answer}?\nA:", "{entity} is a performer for"],
-    # },
-    # "http://schema.org/populationNumber": {
-    #     "closed": [
-    #         "Q: Is {entity}'s population {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s population?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s population?\nA:", "{entity}'s population is"],
-    # },
-    # "http://schema.org/postalCode": {
-    #     "closed": [
-    #         "Q: Is {entity}'s postal code {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s postal code?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is the postal code of {entity}?",
-    #         "The postal code of {entity} is",
-    #     ],
-    # },
-    # "http://schema.org/recordLabel": {
-    #     "closed": [
-    #         "Q: Is {entity} signed to {answer} as a record label?\nA:",
-    #         "Q: Does {answer} serve as {entity}'s record label?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: Who is {entity}'s record label?\nA:",
-    #         "{entity}'s record label is",
-    #     ],
-    # },
+    },
+    "http://schema.org/musicBy": {
+        "closed": [
+            "Q: Is {answer} the creator of the music for '{entity}'?\nA:",
+            "Q: Is the music for '{entity}' created by {answer}?\nA:",
+        ],
+        "open": [
+            "Q: Who created the music for '{entity}'?\nA:",
+            "The music for {entity} is by",
+        ],
+    },
+    "reverse-http://schema.org/musicBy": {
+        "closed": [
+            "Q: Is {entity} the composer of the music for '{answer}'?\nA:",
+            "Q: Is the music for '{answer}' composed by {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What piece of music did '{entity}' compose?\nA:",
+            "{entity} composed the music for",
+        ],
+    },
+    "http://schema.org/nationality": {
+        "closed": [
+            "Q: Is {entity}'s nationality {answer}?\nA:",
+            "Q: Is {answer} the nationality of {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is {entity}'s nationality?\nA:",
+            "{entity}'s nationality is",
+        ],
+    },
+    "http://schema.org/neighbors": {
+        "closed": [
+            "Q: Is {entity} a neighbor of {answer}?\nA:",
+            "Q: Does {answer} neighbor {entity}?\nA:",
+        ],
+        "open": [
+            "Q: Who is a neighbor of {entity}?\nA:",
+            "One neighbor of {entity} is",
+        ],
+    },
+    "http://schema.org/numberOfEmployees": {
+        "closed": [
+            "Q: Does {entity} have {answer} employees?\nA:",
+            "Q: Is {answer} the number of employees for {entity}?\nA:",
+        ],
+        "open": [
+            "Q: How many employees does {entity} have?\nA:",
+            "The number of employees of {entity} is",
+        ],
+    },
+    "http://schema.org/numberOfEpisodes": {
+        "closed": [
+            "Q: Does {entity} have {answer} episodes?\nA:",
+            "Q: Is {answer} the number of episodes for {entity}?\nA:",
+        ],
+        "open": [
+            "Q: How many episodes does {entity} have?\nA:",
+            "The number of episodes of {entity} is",
+        ],
+    },
+    "http://schema.org/numberOfPages": {
+        "closed": [
+            "Q: Does {entity} have {answer} pages?\nA:",
+            "Q: Is {answer} the number of pages for {entity}?\nA:",
+        ],
+        "open": [
+            "Q: How many pages does {entity} have?\nA:",
+            "The number of pages of {entity} is",
+        ],
+    },
+    "http://schema.org/numberOfSeasons": {
+        "closed": [
+            "Q: Does {entity} have {answer} seasons?\nA:",
+            "Q: Is {answer} the number of seasons for {entity}?\nA:",
+        ],
+        "open": [
+            "Q: How many seasons does {entity} have?\nA:",
+            "The number of seasons of {entity} is",
+        ],
+    },
+    "http://schema.org/officialLanguage": {
+        "closed": [
+            "Q: Is {entity}'s official language {answer}?\nA:",
+            "Q: Is {answer} the official language of {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is the official language of {entity}?\nA:",
+            "The official language of {entity} is",
+        ],
+    },
+    "reverse-http://schema.org/officialLanguage": {
+        "closed": [
+            "Q: Is {answer}'s official language {entity}?\nA:",
+            "Q: Is {entity} the official language of {answer}?\nA:",
+        ],
+        "open": [
+            "Q: What country has an official language of {entity}?\nA:",
+            "A country with an official language of {entity} is",
+        ],
+    },
+    "http://schema.org/organizer": {
+        "closed": [
+            "Q: Is {entity} organized by {answer}?\nA:",
+            "Q: Does {answer} serve as the organizer for {entity}?\nA:",
+        ],
+        "open": ["Q: Who organizes {entity}?\nA:", "{entity} is organized by"],
+    },
+    "reverse-http://schema.org/organizer": {
+        "closed": [
+            "Q: Is {answer} organized by {entity}?\nA:",
+            "Q: Does {entity} serve as the organizer for {answer}?\nA:",
+        ],
+        "open": ["Q: What is an event organized by {entity}?\nA:", "One event organized by {entity} is"],
+    },
+    "http://schema.org/ownedBy": {
+        "closed": [
+            "Q: Is {entity} owned by {answer}?\nA:",
+            "Q: Does {answer} own {entity}?\nA:",
+        ],
+        "open": ["Q: Who owns {entity}?\nA:", "{entity} is owned by"],
+    },
+    "reverse-http://schema.org/ownedBy": {
+        "closed": [
+            "Q: Is {answer} owned by {entity}?\nA:",
+            "Q: Does {entity} own {answer}?\nA:",
+        ],
+        "open": ["Q: What is a place or thing owned by {entity}?\nA:", "One place or thing owned by {entity} is"],
+    },
+    "http://schema.org/owns": {
+        "closed": [
+            "Q: Does {entity} own {answer}?\nA:",
+            "Q: Is {answer} owned by {entity}?\nA:",
+        ],
+        "open": ["Q: What does {entity} own?\nA:", "{entity} owns"],
+    },
+    "reverse-http://schema.org/owns": {
+        "closed": [
+            "Q: Does {answer} own {entity}?\nA:",
+            "Q: Is {entity} owned by {answer}?\nA:",
+        ],
+        "open": ["Q: Who owns {entity}?\nA:", "{entity} is owned by"],
+    },
+    "reverse-http://schema.org/parentTaxon": {
+        "closed": [
+            "Q: Is {entity} a parent taxon of {answer}?\nA:",
+            "Q: Does {answer} have {entity} as a parent taxon?\nA:",
+        ],
+        "open": [
+            "Q: What is {entity} the parent taxon of ?\nA:",
+            "{entity} is a parent taxon of",
+        ],
+    },
+    "http://schema.org/parentTaxon": {
+        "closed": [
+            "Q: Is {answer} a parent taxon of {entity}?\nA:",
+            "Q: Does {entity} have {answer} as a parent taxon?\nA:",
+        ],
+        "open": [
+            "Q: What is a parent taxon of {entity}?\nA:",
+            "A parent taxon of {entity} is",
+        ],
+    },
+    "reverse-http://schema.org/performer": {
+        "closed": [
+            "Q: Is the actor/actress {entity} a performer for {answer}?\nA:",
+            "Q: Is {answer} performed by the actor/actress {entity}?\nA:",
+        ],
+        "open": [
+            "Q: Which actor/actress performs the role of {entity}?\nA:",
+            "The role of {entity} is performed by the actor/actress",
+        ],
+    },
+    "http://schema.org/performer": {
+        "closed": [
+            "Q: Is the actor/actress {answer} a performer for {entity}?\nA:",
+            "Q: Is {entity} performed by the actor/actress {answer}?\nA:",
+        ],
+        "open": [
+            "Q: What is a role performed by the actor/actress {entity}?\nA:",
+            "One role performed by the actor/actress {entity} is",
+        ],
+    },
+    "http://schema.org/populationNumber": {
+        "closed": [
+            "Q: Is {entity}'s population {answer}?\nA:",
+            "Q: Is {answer} the population of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the population of {entity}?\nA:", "The population of {entity} is"],
+    },
+    "http://schema.org/postalCode": {
+        "closed": [
+            "Q: Is {entity}'s postal code {answer}?\nA:",
+            "Q: Is {answer} the postal code of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the postal code of {entity}?\nA:", "The postal code of {entity} is"],
+    },
+    "http://schema.org/recordLabel": {
+        "closed": [
+            "Q: Is {entity} signed to {answer} as a record label?\nA:",
+            "Q: Does {answer} serve as {entity}'s record label?\nA:",
+        ],
+        "open": [
+            "Q: Who is {entity}'s record label?\nA:",
+            "{entity}'s record label is",
+        ],
+    },
     # "http://schema.org/sameAs": {
     #     "closed": [
     #         "Q: Is {entity} the same as {answer}?\nA:",
@@ -675,27 +736,34 @@ yago_topic_to_qfs = {
     #         "{entity} is the same as",
     #     ],
     # },
-    # "http://schema.org/sponsor": {
-    #     "closed": [
-    #         "Q: Is {entity} sponsored by {answer}?\nA:",
-    #         "Q: Does {answer} serve as a sponsor for {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: Who sponsors {entity}?\nA:", "{entity} is sponsored by"],
-    # },
-    # "http://schema.org/spouse": {
-    #     "closed": [
-    #         "Q: Is {entity} married to {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s spouse?\nA:",
-    #     ],
-    #     "open": ["Q: Who is {entity}'s spouse?\nA:", "{entity}'s spouse is"],
-    # },
-    # "http://schema.org/startDate": {
-    #     "closed": [
-    #         "Q: Does {entity} start on {answer}?\nA:",
-    #         "Q: Is {answer} {entity}'s start date?\nA:",
-    #     ],
-    #     "open": ["Q: When does {entity} start?\nA:", "{entity} starts on"],
-    # },
+    "http://schema.org/sponsor": {
+        "closed": [
+            "Q: Is {entity} sponsored by {answer}?\nA:",
+            "Q: Does {answer} serve as a sponsor for {entity}?\nA:",
+        ],
+        "open": ["Q: Who sponsors the {entity}?\nA:", "{entity} is sponsored by"],
+    },
+    "reverse-http://schema.org/sponsor": {
+        "closed": [
+            "Q: Is {answer} sponsored by {entity}?\nA:",
+            "Q: Does {entity} serve as a sponsor for {answer}?\nA:",
+        ],
+        "open": ["Q: What is sponsored by {entity}?\nA:", "{entity} sponsors"],
+    },
+    "http://schema.org/spouse": {
+        "closed": [
+            "Q: Is {entity} married to {answer}?\nA:",
+            "Q: Is {answer} married to {entity}?\nA:",
+        ],
+        "open": ["Q: Who is {entity} married to?\nA:", "{entity} is married to"],
+    },
+    "http://schema.org/startDate": {
+        "closed": [
+            "Q: Did {entity} start on {answer}?\nA:",
+            "Q: Is {answer} the start date of {entity}?\nA:",
+        ],
+        "open": ["Q: When did {entity} start?\nA:", "{entity} started on"],
+    },
     # "http://schema.org/superEvent": {
     #     "closed": [
     #         "Q: Is {entity} a super event of {answer}?\nA:",
@@ -706,246 +774,368 @@ yago_topic_to_qfs = {
     #         "{entity} is a super event of",
     #     ],
     # },
-    # "http://schema.org/unemploymentRate": {
-    #     "closed": [
-    #         "Q: Is {entity}'s unemployment rate {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s unemployment rate?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s unemployment rate?\nA:",
-    #         "{entity}'s unemployment rate is",
-    #     ],
-    # },
-    # "http://schema.org/url": {
-    #     "closed": [
-    #         "Q: Is {entity}'s URL {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s URL?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s URL?\nA:", "{entity}'s URL is"],
-    # },
-    # "http://schema.org/worksFor": {
-    #     "closed": [
-    #         "Q: Does {entity} work for {answer}?\nA:",
-    #         "Q: Is {answer} {entity}'s employer?\nA:",
-    #     ],
-    #     "open": ["Q: Who does {entity} work for?\nA:", "{entity} works for"],
-    # },
-    # "http://yago-knowledge.org/resource/academicDegree": {
-    #     "closed": [
-    #         "Q: Is {entity} awarded an academic degree in {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s academic degree?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What academic degree does {entity} hold?\nA:",
-    #         "{entity} holds an academic degree in",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/appearsIn": {
-    #     "closed": [
-    #         "Q: Does {entity} appear in {answer}?\nA:",
-    #         "Q: Is {answer} a place where {entity} appears?\nA:",
-    #     ],
-    #     "open": ["Q: Where does {entity} appear?\nA:", "{entity} appears in"],
-    # },
-    # "http://yago-knowledge.org/resource/beliefSystem": {
-    #     "closed": [
-    #         "Q: Does {entity} believe in {answer}?\nA:",
-    #         "Q: Is {answer} {entity}'s belief system?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s belief system?\nA:",
-    #         "{entity}'s belief system is",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/candidateIn": {
-    #     "closed": [
-    #         "Q: Is {entity} a candidate in {answer}?\nA:",
-    #         "Q: Does {answer} involve {entity} as a candidate?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: For what is {entity} a candidate?\nA:",
-    #         "{entity} is a candidate in",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/capital": {
-    #     "closed": [
-    #         "Q: Is {entity}'s capital {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s capital?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s capital?\nA:", "{entity}'s capital is"],
-    # },
-    # "http://yago-knowledge.org/resource/conferredBy": {
-    #     "closed": [
-    #         "Q: Is {entity} conferred by {answer}?\nA:",
-    #         "Q: Does {answer} confer {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: Who confers {entity}?\nA:", "{entity} is conferred by"],
-    # },
-    # "http://yago-knowledge.org/resource/consumes": {
-    #     "closed": [
-    #         "Q: Does {entity} consume {answer}?\nA:",
-    #         "Q: Is {answer} something {entity} consumes?\nA:",
-    #     ],
-    #     "open": ["Q: What does {entity} consume?\nA:", "{entity} consumes"],
-    # },
-    # "http://yago-knowledge.org/resource/director": {
-    #     "closed": [
-    #         "Q: Is {entity} a director in {answer}?\nA:",
-    #         "Q: Does {answer} have {entity} as a director?\nA:",
-    #     ],
-    #     "open": ["Q: Who directs {answer}?\nA:", "{entity} is a director in"],
-    # },
-    # "http://yago-knowledge.org/resource/distanceFromEarth": {
-    #     "closed": [
-    #         "Q: Is {entity}'s distance from Earth {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s distance from Earth?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s distance from Earth?\nA:",
-    #         "{entity}'s distance from Earth is",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/doctoralAdvisor": {
-    #     "closed": [
-    #         "Q: Is {entity} advised by {answer} for doctoral studies?\nA:",
-    #         "Q: Does {answer} serve as {entity}'s doctoral advisor?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: Who is {entity}'s doctoral advisor?\nA:",
-    #         "{entity}'s doctoral advisor is",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/flowsInto": {
-    #     "closed": [
-    #         "Q: Does {entity} flow into {answer}?\nA:",
-    #         "Q: Is {answer} where {entity} flows into?\nA:",
-    #     ],
-    #     "open": ["Q: Where does {entity} flow?\nA:", "{entity} flows into"],
-    # },
-    # "http://yago-knowledge.org/resource/follows": {
-    #     "closed": [
-    #         "Q: Does {entity} follow {answer}?\nA:",
-    #         "Q: Is {answer} what {entity} follows?\nA:",
-    #     ],
-    #     "open": ["Q: Who or what does {entity} follow?\nA:", "{entity} follows"],
-    # },
-    # "http://yago-knowledge.org/resource/length": {
-    #     "closed": [
-    #         "Q: Is {entity}'s length {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s length?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s length?\nA:", "{entity}'s length is"],
-    # },
-    # "http://yago-knowledge.org/resource/luminosity": {
-    #     "closed": [
-    #         "Q: Is {entity}'s luminosity {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s luminosity?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s luminosity?\nA:", "{entity}'s luminosity is"],
-    # },
-    # "http://yago-knowledge.org/resource/mass": {
-    #     "closed": [
-    #         "Q: Is {entity}'s mass {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s mass?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s mass?\nA:", "{entity}'s mass is"],
-    # },
-    # "http://yago-knowledge.org/resource/notableWork": {
-    #     "closed": [
-    #         "Q: Is {entity} associated with {answer} as a notable work?\nA:",
-    #         "Q: Does {answer} represent {entity}'s notable work?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s notable work?\nA:",
-    #         "{entity}'s notable work is",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/parallax": {
-    #     "closed": [
-    #         "Q: Is {entity}'s parallax {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s parallax?\nA:",
-    #     ],
-    #     "open": ["Q: What is {entity}'s parallax?\nA:", "{entity}'s parallax is"],
-    # },
-    # "http://yago-knowledge.org/resource/parentBody": {
-    #     "closed": [
-    #         "Q: Is {entity} a parent body of {answer}?\nA:",
-    #         "Q: Does {answer} have {entity} as a parent body?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s parent body?\nA:",
-    #         "{entity} is a parent body of",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/participant": {
-    #     "closed": [
-    #         "Q: Is {entity} a participant in {answer}?\nA:",
-    #         "Q: Does {answer} involve {entity} as a participant?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: Who participates in {answer}?\nA:",
-    #         "{entity} is a participant in",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/playsIn": {
-    #     "closed": [
-    #         "Q: Does {entity} play in {answer}?\nA:",
-    #         "Q: Is {answer} where {entity} plays?\nA:",
-    #     ],
-    #     "open": ["Q: Where does {entity} play?\nA:", "{entity} plays in"],
-    # },
-    # "http://yago-knowledge.org/resource/radialVelocity": {
-    #     "closed": [
-    #         "Q: Is {entity}'s radial velocity {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s radial velocity?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s radial velocity?\nA:",
-    #         "{entity}'s radial velocity is",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/replaces": {
-    #     "closed": [
-    #         "Q: Does {entity} replace {answer}?\nA:",
-    #         "Q: Is {answer} replaced by {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: What does {entity} replace?\nA:", "{entity} replaces"],
-    # },
-    # "http://yago-knowledge.org/resource/sportNumber": {
-    #     "closed": [
-    #         "Q: Is {entity}'s sport number {answer}?\nA:",
-    #         "Q: Does {answer} represent {entity}'s sport number?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is {entity}'s sport number?\nA:",
-    #         "{entity}'s sport number is",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/studentOf": {
-    #     "closed": [
-    #         "Q: Is {entity} a student of {answer}?\nA:",
-    #         "Q: Does {answer} teach {entity}?\nA:",
-    #     ],
-    #     "open": ["Q: Who is {entity}'s teacher?\nA:", "{entity} is a student of"],
-    # },
-    # "http://yago-knowledge.org/resource/studentsCount": {
-    #     "closed": [
-    #         "Q: Does {entity} have {answer} students?\nA:",
-    #         "Q: Is {answer} the count of {entity}'s students?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: How many students does {entity} have?\nA:",
-    #         "{entity} has a total of",
-    #     ],
-    # },
-    # "http://yago-knowledge.org/resource/terminus": {
-    #     "closed": [
-    #         "Q: Is {entity} the terminus of {answer}?\nA:",
-    #         "Q: Does {answer} have {entity} as its terminus?\nA:",
-    #     ],
-    #     "open": [
-    #         "Q: What is the terminus of {answer}?\nA:",
-    #         "{entity} is the terminus of",
-    #     ],
-    # },
+    "http://schema.org/unemploymentRate": {
+        "closed": [
+            "Q: Is {entity}'s unemployment rate {answer}%?\nA:",
+            "Q: Is {answer}% the unemployment rate of {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is the unemployment rate of {entity}?\nA:",
+            "The unemployment rate of {entity} is",
+        ],
+    },
+    "http://schema.org/url": {
+        "closed": [
+            "Q: Is {entity}'s URL {answer}?\nA:",
+            "Q: Is {answer} the URL for {entity}?\nA:",
+        ],
+        "open": ["Q: What is the URL for {entity}?\nA:", "The URL for {entity} is"],
+    },
+    "http://schema.org/worksFor": {
+        "closed": [
+            "Q: Did {entity} work for {answer}?\nA:",
+            "Q: Was {answer} the employer of {entity}?\nA:",
+        ],
+        "open": ["Q: Who does {entity} work for?\nA:", "{entity} works for"],
+    },
+    "reverse-http://schema.org/worksFor": {
+        "closed": [
+            "Q: Did {answer} work for {entity}?\nA:",
+            "Q: Was {entity} the employer of {answer}?\nA:",
+        ],
+        "open": ["Q: Who is a person who works for {entity}?\nA:", "One person who works for {entity} is"],
+    },
+    "http://yago-knowledge.org/resource/academicDegree": {
+        "closed": [
+            "Q: Was {entity} awarded an academic degree of {answer}?\nA:",
+            "Q: Was the academic degree of {answer} ever awarded to {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What academic degree does {entity} hold?\nA:",
+            "An academic degree held by {entity} is",
+        ],
+    },
+    "http://yago-knowledge.org/resource/appearsIn": {
+        "closed": [
+            "Q: Does {entity} appear in the work '{answer}'?\nA:",
+            "Q: Does the work '{answer}' feature {entity}?\nA:",
+        ],
+        "open": ["Q: In what work does {entity} appear?\nA:", "{entity} appears in"],
+    },
+    "reverse-http://yago-knowledge.org/resource/appearsIn": {
+        "closed": [
+            "Q: Does {answer} appear in the work '{entity}'?\nA:",
+            "Q: Does the work '{entity}' feature {answer}?\nA:",
+        ],
+        "open": ["Q: What appears in the work '{entity}'?\nA:", "{entity} features"],
+    },
+    "http://yago-knowledge.org/resource/beliefSystem": {
+        "closed": [
+            "Q: Does {entity} believe in {answer}?\nA:",
+            "Q: Is {answer} the belief system of {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is the belief system of {entity}?\nA:",
+            "The belief system of {entity} is",
+        ],
+    },
+    "http://yago-knowledge.org/resource/candidateIn": {
+        "closed": [
+            "Q: Was {entity} a candidate in the {answer}?\nA:",
+            "Q: Did the {answer} involve {entity} as a candidate?\nA:",
+        ],
+        "open": [
+            "Q: For what is {entity} a candidate?\nA:",
+            "{entity} is a candidate in",
+        ],
+    },
+    "http://yago-knowledge.org/resource/capital": {
+        "closed": [
+            "Q: Is the capital of {entity} {answer}?\nA:",
+            "Q: Is {answer} the capital of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the capital of {entity}?\nA:", "The capital of {entity} is"],
+    },
+    "reverse-http://yago-knowledge.org/resource/capital": {
+        "closed": [
+            "Q: Is the capital of {answer} {entity}?\nA:",
+            "Q: Is {entity} the capital of {answer}?\nA:",
+        ],
+        "open": ["Q: What is {entity} the capital of?\nA:", "{entity} is the capital of"],
+    },
+    "http://yago-knowledge.org/resource/conferredBy": {
+        "closed": [
+            "Q: Was the '{entity}' conferred by {answer}?\nA:",
+            "Q: Does {answer} confer the '{entity}'?\nA:",
+        ],
+        "open": ["Q: Who confers the '{entity}'?\nA:", "'{entity}' is conferred by"],
+    },
+    "reverse-http://yago-knowledge.org/resource/conferredBy": {
+        "closed": [
+            "Q: Was the '{answer}' conferred by {entity}?\nA:",
+            "Q: Does {entity} confer the '{answer}'?\nA:",
+        ],
+        "open": ["Q: What was conferred upon '{entity}'?\nA:", "'{entity}' was conferred the"],
+    },
+    "http://yago-knowledge.org/resource/consumes": {
+        "closed": [
+            "Q: Does a/an {entity} consume a/an {answer}?\nA:",
+            "Q: Is a/an {answer} something a/an {entity} would consume?\nA:",
+        ],
+        "open": ["Q: What does a/an {entity} consume?\nA:", "A/an {entity} would consume a/an"],
+    },
+    "reverse-http://yago-knowledge.org/resource/consumes": {
+        "closed": [
+            "Q: Does a/an {answer} consume a/an {entity}?\nA:",
+            "Q: Is a/an {entity} something a/an {answer} would consume?\nA:",
+        ],
+        "open": ["Q: What would consume a/an {entity}?\nA:", "A/an {entity} would be consumed by a/an"],
+    },
+    "http://yago-knowledge.org/resource/director": {
+        "closed": [
+            "Q: Was {entity} ever directed by {answer}?\nA:",
+            "Q: Did {answer} ever direct {entity}?\nA:",
+        ],
+        "open": ["Q: Who has been a director of {entity}?\nA:", "{entity} has been directed by"],
+    },
+    "reverse-http://yago-knowledge.org/resource/director": {
+        "closed": [
+            "Q: Was {answer} ever directed by {entity}?\nA:",
+            "Q: Did {entity} ever direct {answer}?\nA:",
+        ],
+        "open": ["Q: What has {entity} been a director of?\nA:", "{entity} has directed"],
+    },
+    "http://yago-knowledge.org/resource/distanceFromEarth": {
+        "closed": [
+            "Q: Is the distance between {entity} and Earth {answer}?\nA:",
+            "Q: Is {answer} the distance between Earth and {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is the distance between {entity} and Earth?\nA:",
+            "The distance between {entity} and Earth is",
+        ],
+    },
+    "http://yago-knowledge.org/resource/doctoralAdvisor": {
+        "closed": [
+            "Q: Was {entity} advised by {answer} for doctoral studies?\nA:",
+            "Q: Was {answer} a doctoral advisor for {entity}?\nA:",
+        ],
+        "open": [
+            "Q: Who is a doctoral advisor for {entity}?\nA:",
+            "A doctoral advisor of {entity} was",
+        ],
+    },
+    "reverse-http://yago-knowledge.org/resource/doctoralAdvisor": {
+        "closed": [
+            "Q: Was {answer} advised by {entity} for doctoral studies?\nA:",
+            "Q: Was {entity} a doctoral advisor for {answer}?\nA:",
+        ],
+        "open": [
+            "Q: Who was a doctoral student advised by {entity}?\nA:",
+            "A doctoral student advised by {entity} was",
+        ],
+    },
+    "http://yago-knowledge.org/resource/flowsInto": {
+        "closed": [
+            "Q: Does {entity} flow into {answer}?\nA:",
+            "Q: Is {answer} where {entity} flows into?\nA:",
+        ],
+        "open": ["Q: Where does {entity} flow into?\nA:", "{entity} flows into"],
+    },
+    "reverse-http://yago-knowledge.org/resource/flowsInto": {
+        "closed": [
+            "Q: Does {answer} flow into {entity}?\nA:",
+            "Q: Is {entity} where {answer} flows into?\nA:",
+        ],
+        "open": [
+            "Q: What is one body of water that flows into {entity}?\nA:",
+            "One body of water that flows into {entity} is",
+        ],
+    },
+    "http://yago-knowledge.org/resource/follows": {
+        "closed": [
+            "Q: Did the {entity} follow the {answer}?\nA:",
+            "Q: Was the {answer} followed by the {entity}?\nA:",
+        ],
+        "open": ["Q: What event and year did {entity} follow?\nA:", "The event and year followed by {entity} was"],
+    },
+    "http://yago-knowledge.org/resource/length": {
+        "closed": [
+            "Q: Is {entity}'s length {answer}?\nA:",
+            "Q: Is {answer} the length of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the length of {entity}?\nA:", "The length of {entity} is"],
+    },
+    "http://yago-knowledge.org/resource/luminosity": {
+        "closed": [
+            "Q: Is {entity}'s luminosity {answer}?\nA:",
+            "Q: Is {answer} the luminosity of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the luminosity of {entity}?\nA:", "The luminosity of {entity} is"],
+    },
+    "http://yago-knowledge.org/resource/mass": {
+        "closed": [
+            "Q: Is {entity}'s mass {answer}?\nA:",
+            "Q: Is {answer} the mass of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the mass of {entity}?\nA:", "The mass of {entity} is"],
+    },
+    "http://yago-knowledge.org/resource/notableWork": {
+        "closed": [
+            "Q: Is one notable work by {entity} '{answer}'?\nA:",
+            "Q: Is '{answer}' a notable work by {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is a notable work by {entity}?\nA:",
+            "One notable work by {entity} is",
+        ],
+    },
+    "reverse-http://yago-knowledge.org/resource/notableWork": {
+        "closed": [
+            "Q: Is one notable work by {answer} '{entity}'?\nA:",
+            "Q: Is '{entity}' a notable work by {answer}?\nA:",
+        ],
+        "open": [
+            "Q: Who made the notable work '{entity}'?\nA:",
+            "The notable work '{entity}' is by",
+        ],
+    },
+    "http://yago-knowledge.org/resource/parallax": {
+        "closed": [
+            "Q: Is {entity}'s parallax {answer}?\nA:",
+            "Q: Is {answer} the parallax of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the parallax of {entity}?\nA:", "The parallax of {entity} is"],
+    },
+    "http://yago-knowledge.org/resource/parentBody": {
+        "closed": [
+            "Q: Does {entity} have {answer} as a parent body?\nA:",
+            "Q: Is {answer} a parent body of {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is the parent body of {entity}?\nA:",
+            "The parent body of {entity} is",
+        ],
+    },
+    "reverse-http://yago-knowledge.org/resource/parentBody": {
+        "closed": [
+            "Q: Does {answer} have {entity} as a parent body?\nA:",
+            "Q: Is {entity} a parent body of {answer}?\nA:",
+        ],
+        "open": [
+            "Q: What is {entity} the parent body of?\nA:",
+            "{entity} is the parent body of",
+        ],
+    },
+    "reverse-http://yago-knowledge.org/resource/participant": {
+        "closed": [
+            "Q: Was {entity} a participant in the {answer}?\nA:",
+            "Q: Did {answer} involve {entity} as a participant?\nA:",
+        ],
+        "open": [
+            "Q: What was an event that {entity} participated in?\nA:",
+            "{entity} participated in",
+        ],
+    },
+    "http://yago-knowledge.org/resource/participant": {
+        "closed": [
+            "Q: Was {answer} a participant in the {entity}?\nA:",
+            "Q: Did {entity} involve {answer} as a participant?\nA:",
+        ],
+        "open": [
+            "Q: Who is a participant in the event {entity}?\nA:",
+            "One participant in {entity} was",
+        ],
+    },
+    "http://yago-knowledge.org/resource/playsIn": {
+        "closed": [
+            "Q: Does {entity} play in the '{answer}'?\nA:",
+            "Q: Is the {answer} the league in which {entity} plays?\nA:",
+        ],
+        "open": ["Q: In what league does {entity} play?\nA:", "The league that {entity} plays in is the"],
+    },
+    "reverse-http://yago-knowledge.org/resource/playsIn": {
+        "closed": [
+            "Q: Does {answer} play in the '{entity}'?\nA:",
+            "Q: Is the {entity} the league in which {answer} plays?\nA:",
+        ],
+        "open": ["Q: Who is a player in the {entity}?\nA:", "{entity} includes the player"],
+    },
+    "http://yago-knowledge.org/resource/radialVelocity": {
+        "closed": [
+            "Q: Is {entity}'s radial velocity {answer}?\nA:",
+            "Q: Is {answer} the radial velocity of {entity}?\nA:",
+        ],
+        "open": ["Q: What is the radial velocity of {entity}?\nA:", "The radial velocity of {entity} is"],
+    },
+    "http://yago-knowledge.org/resource/replaces": {
+        "closed": [
+            "Q: Did {entity} replace {answer}?\nA:",
+            "Q: Was {answer} replaced by {entity}?\nA:",
+        ],
+        "open": ["Q: What does {entity} replace?\nA:", "{entity} replaces"],
+    },
+    "reverse-http://yago-knowledge.org/resource/replaces": {
+        "closed": [
+            "Q: Did {answer} replace {entity}?\nA:",
+            "Q: Was {entity} replaced by {answer}?\nA:",
+        ],
+        "open": ["Q: What replaced {entity}?\nA:", "{entity} was replaced by"],
+    },
+    "http://yago-knowledge.org/resource/sportNumber": {
+        "closed": [
+            "Q: Is {entity}'s sports number {answer}?\nA:",
+            "Q: Is {answer} the sports number for {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is {entity}'s sports number?\nA:",
+            "{entity}'s sports number is",
+        ],
+    },
+    "http://yago-knowledge.org/resource/studentOf": {
+        "closed": [
+            "Q: Was {entity} a student of {answer}?\nA:",
+            "Q: Was {answer} a teacher of {entity}?\nA:",
+            "Q: Was a student of {answer} {entity}?\nA:",
+        ],
+        "open": ["Q: Who was {entity} a student of?\nA:", "{entity} was a student of"],
+    },
+    "reverse-http://yago-knowledge.org/resource/studentOf": {
+        "closed": [
+            "Q: Was {answer} a student of {entity}?\nA:",
+            "Q: Was {entity} a teacher of {answer}?\nA:",
+            "Q: Was a student of {entity} {answer}?\nA:",
+        ],
+        "open": ["Q: Who was a student of {entity}?\nA:", "A student of {entity} was"],
+    },
+    "http://yago-knowledge.org/resource/studentsCount": {
+        "closed": [
+            "Q: Does {entity} have {answer} students?\nA:",
+            "Q: Is {answer} the number of students at {entity}?\nA:",
+        ],
+        "open": [
+            "Q: How many students does {entity} have?\nA:",
+            "The number of students at {entity} is",
+        ],
+    },
+    "http://yago-knowledge.org/resource/terminus": {
+        "closed": [
+            "Q: Is {answer} the terminus of {entity}?\nA:",
+            "Q: Is the terminus of {entity} {answer}?\nA:",
+        ],
+        "open": [
+            "Q: What is the terminus of {entity}?\nA:",
+            "The terminus of {entity} is",
+        ],
+    },
+    "reverse-http://yago-knowledge.org/resource/terminus": {
+        "closed": [
+            "Q: Is {entity} the terminus of {answer}?\nA:",
+            "Q: Is the terminus of {answer} {entity}?\nA:",
+        ],
+        "open": [
+            "Q: What is {entity} the terminus of?\nA:",
+            "{entity} is the terminus of",
+        ],
+    },
 }
