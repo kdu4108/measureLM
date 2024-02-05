@@ -311,7 +311,6 @@ def main():
         QUERY_TYPES=QUERY_TYPES,
         ANSWER_MAP=ANSWER_MAP,
     )
-
     # GPU stuff
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
