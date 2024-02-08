@@ -28,7 +28,14 @@ def extract_name_from_yago_uri(uri: str):
     if uri.startswith("reverse-"):
         uri = uri.split("reverse-")[1]
         is_reversed = True
-    pattern = r"http://(?:www\.)?([^\/]+)\.org\/(.+)$"
+    if uri.startswith("http://schema.org"):
+        pattern = r"http://(?:www\.)?([^\/]+)\.org\/(.+)$"
+    elif uri.startswith("http://yago-knowledge.org"):
+        pattern = r"http:\/\/([^\.]+)\.org\/resource\/([^\/]+)"
+    else:
+        raise ValueError(
+            f"Expected uri to only start with http://schema.org or http://yago-knowledge.org, instead received {uri}"
+        )
     matches = re.match(pattern, uri)
 
     if matches:
