@@ -106,7 +106,11 @@ def construct_paths_and_dataset_kwargs(
     QUERY_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
 ):
-    SUBNAME = f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"  # TODO: probably need to fix this
+    SUBNAME = (
+        f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"
+        if QUERY_ID is not None
+        else None
+    )  # TODO: probably need to fix this
     DATASET_KWARGS_IDENTIFIABLE = dict(
         max_contexts=MAX_CONTEXTS,
         max_entities=MAX_ENTITIES,

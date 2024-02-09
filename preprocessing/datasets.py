@@ -230,26 +230,31 @@ class CountryCapital(EntityContextQueryDataset):
         entities_path: Optional[str] = None,
         queries_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
+        answers_path: Optional[str] = None,
         # save_dir: str = None,
         max_entities: int = None,
         max_contexts: int = None,
         cap_per_type: bool = False,
         ablate_out_relevant_contexts: bool = False,
+        uniform_contexts: bool = False,
+        deduplicate_entities: bool = False,
+        entity_selection_func_name: str = "random_sample",
         seed: Optional[int] = None,
-        raw_country_capitals_path: Optional[str] = "../data/CountryCapital/real-fake-country-capital.csv",
+        raw_data_path: Optional[str] = "../data/CountryCapital/real-fake-country-capital.csv",
         overwrite: bool = False,
     ) -> None:
         super().__init__(
             entities_path=entities_path,
             queries_path=queries_path,
             contexts_path=contexts_path,
+            answers_path=answers_path,
             max_entities=max_entities,
             max_contexts=max_contexts,
             seed=seed,
             overwrite=overwrite,
             # save_dir=save_dir,
         )
-        self.raw_country_capitals_path = raw_country_capitals_path
+        self.raw_data_path = raw_data_path
         self.name = "CountryCapital"
         self.cap_per_type = cap_per_type
         self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
@@ -281,20 +286,21 @@ class CountryCapital(EntityContextQueryDataset):
             ]
         )
         """
-        country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
+        country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
 
         if self.max_entities is not None:
             if self.cap_per_type:
                 entity_types = country_capitals["type"].unique()
                 country_capitals = country_capitals.groupby("type").sample(n=int(self.max_entities / len(entity_types)))
-                entities = country_capitals["country"].tolist()
+                entities_and_answers = country_capitals[["country", "capital"]]
             else:
-                entities: List[str] = country_capitals["country"].sample(self.max_entities).tolist()
+                entities_and_answers: List[str] = country_capitals[["country", "capital"]].sample(self.max_entities)
         else:
-            entities: List[str] = country_capitals["country"].tolist()
+            entities_and_answers: List[str] = country_capitals[["country", "capital"]]
 
+        entities = entities_and_answers["country"].tolist()
         entities = [(e,) for e in entities]
-        answers = [None] * len(entities)  # TODO: implement answers for this task
+        answers = entities_and_answers["capital"].tolist()  # TODO: implement answers for this task
 
         if self.entities_path is not None:
             self._save_to_json(entities, self.entities_path)
@@ -314,7 +320,7 @@ class CountryCapital(EntityContextQueryDataset):
             "The capital of Suriname is Kielecki.\n",
         ]
         """
-        country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_country_capitals_path)
+        country_capitals: pd.DataFrame = load_dataset_from_path(self.raw_data_path)
         contexts: List[str] = []
         for country in country_capitals["country"]:
             if (self.ablate_out_relevant_contexts and (country,) not in self.entities) or (
