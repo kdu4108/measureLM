@@ -7,12 +7,11 @@ from transformers import AutoTokenizer
 
 RUN_LOCALLY = False
 YAGO_QEC_PATH = "data/YagoECQ/yago_qec.json"  # assuming you are running from the root project directory
-
 with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [0]  # val every 10
+seeds = [2]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -21,19 +20,36 @@ if RUN_LOCALLY:
     query_ids = list(yago_qec.keys())[:5]
 else:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    max_contexts = [500]
-    max_entities = [100]
-    query_ids = list(yago_qec.keys())
+    max_contexts = [300]
+    max_entities = [60]
+    # query_ids = list(yago_qec.keys())
+    query_ids = ["http://yago-knowledge.org/resource/capital"]
     # query_ids = ["http://schema.org/founder"]
 
-ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree", "random_sample"]
+# ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree", "random_sample"]
+ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree"]
+# ent_selection_fns = ["random_sample"]
 
-# entity_types = json.dumps(
-#     ["entities", "fake_entities"], separators=(",", ":")
-# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 entity_types = json.dumps(
     ["entities", "gpt_fake_entities"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["my_famous_entities", "my_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["my_famous_entities", "gpt_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["entities", "my_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["entities", "gpt_fake_entities", "my_famous_entities", "my_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
 # query_types = json.dumps(
 #     ["closed", "open"], separators=(",", ":")
 # )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.

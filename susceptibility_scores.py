@@ -106,11 +106,6 @@ def construct_paths_and_dataset_kwargs(
     QUERY_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
 ):
-    SUBNAME = (
-        f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"
-        if QUERY_ID is not None
-        else None
-    )  # TODO: probably need to fix this
     DATASET_KWARGS_IDENTIFIABLE = dict(
         max_contexts=MAX_CONTEXTS,
         max_entities=MAX_ENTITIES,
@@ -123,6 +118,7 @@ def construct_paths_and_dataset_kwargs(
         overwrite=OVERWRITE,
     )
     if DATASET_NAME == "YagoECQ":
+        SUBNAME = f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"  # TODO: probably need to fix this
         DATASET_KWARGS_IDENTIFIABLE = {
             **DATASET_KWARGS_IDENTIFIABLE,
             **{"query_id": QUERY_ID, "subname": SUBNAME, "entity_types": ENTITY_TYPES, "query_types": QUERY_TYPES},
@@ -144,7 +140,7 @@ def construct_paths_and_dataset_kwargs(
         else ""
     )
     data_id += (
-        "-cappertype"
+        "-capperet"
         if "cap_per_type" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["cap_per_type"]
         else ""
     )
@@ -155,12 +151,12 @@ def construct_paths_and_dataset_kwargs(
         else ""
     )
     data_id += (
-        "-uniformcontexts"
+        "-uctxs"
         if "uniform_contexts" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["uniform_contexts"]
         else ""
     )
     data_id += (
-        "-dedupeentities"
+        "-ddpents"
         if "deduplicate_entities" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["deduplicate_entities"]
         else ""
     )

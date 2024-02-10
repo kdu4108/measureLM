@@ -77,6 +77,7 @@ def top_entity_uri_degree(entities_and_answers: List[Tuple[str]], yago_ec: dict,
     entities_and_answers_and_degs = sorted(entities_and_answers_and_degs, key=lambda x: x[2], reverse=True)
 
     # We want to return n entities, but we want to return half real and half fake.
+    # TODO: generalize for >2 entity_types
     num_real = n // 2
     num_fake = n - num_real
 
