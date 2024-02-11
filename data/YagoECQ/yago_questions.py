@@ -1095,7 +1095,6 @@ yago_topic_to_qfs = {
     "http://yago-knowledge.org/resource/studentOf": {
         "closed": [
             "Q: Was {entity} a student of {answer}?\nA:",
-            "Q: Was {answer} a teacher of {entity}?\nA:",
             "Q: Was a student of {answer} {entity}?\nA:",
         ],
         "open": ["Q: Who was {entity} a student of?\nA:", "{entity} was a student of"],
@@ -1103,7 +1102,6 @@ yago_topic_to_qfs = {
     "reverse-http://yago-knowledge.org/resource/studentOf": {
         "closed": [
             "Q: Was {answer} a student of {entity}?\nA:",
-            "Q: Was {entity} a teacher of {answer}?\nA:",
             "Q: Was a student of {entity} {answer}?\nA:",
         ],
         "open": ["Q: Who was a student of {entity}?\nA:", "A student of {entity} was"],
