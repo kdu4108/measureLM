@@ -351,7 +351,7 @@ def main():
         )
 
         tqdm.pandas()
-        val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe.progress_apply(
+        val_df_contexts_per_qe["sus_score_and_persuasion_scores"] = val_df_contexts_per_qe.progress_apply(
             lambda row: estimate_cmi(
                 query=row["query_form"],
                 entity=row["entity"],
@@ -364,12 +364,19 @@ def main():
             ),
             axis=1,
         )
+        val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe[
+            "sus_score_and_persuasion_scores"
+        ].apply(lambda x: x[0])
+        val_df_contexts_per_qe["persuasion_scores"] = val_df_contexts_per_qe["sus_score_and_persuasion_scores"].apply(
+            lambda x: x[1]
+        )
         val_df_contexts_per_qe["full_query_example"] = val_df_contexts_per_qe.progress_apply(
             lambda row: format_query(
                 query=row["query_form"], entity=row["entity"], context=row["contexts"][0], answer=row["answer"]
             ),
             axis=1,
         )
+        val_df_contexts_per_qe.drop(columns=["sus_score_and_persuasion_scores"], inplace=True)
         val_df_contexts_per_qe.to_csv(val_results_path)
     else:
         print("Loading cached results from disk.")

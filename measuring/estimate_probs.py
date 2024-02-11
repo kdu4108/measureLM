@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional, Set
+from typing import Callable, List, Dict, Optional, Set, Tuple
 from collections import Counter
 import math
 import numpy as np
@@ -272,9 +272,9 @@ def estimate_cmi(
     answer_map: Dict[int, List[str]] = None,
     bs: int = 32,
     answer_entity: Optional[str] = None,
-):
+) -> Tuple[float, float]:
     """
-    Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
+    (1) Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
 
     I(X; Y | q[e]) = \sum_{x \in X} \sum_{y \in Y} (p(x, y | q[e]) * log(p(y | x, q[e]) / p(y | q[e]))) # noqa: W605
 
@@ -284,6 +284,12 @@ def estimate_cmi(
         (3) p(x, y | q[e]) = p(y | x, q[e]) * p(x | q[e])              , shape: (|X|, |Y|)
         (4) p(y | q[e]) = \sum_{x \in X} (p(y | x, q[e]) * p(x | q[e])), shape: (|Y|,) # noqa: W605
 
+
+    (2) Furthermore, computes the half pointwise conditional MI I(Y; X=x | q[e]).
+
+    I(Y; X=x | q[e]) = H(Y | q[e]) - H(Y | X=x, q[e])
+                     = - \sum_{y \in Y} (p(y | q[e]) * log(p(y | q[e]))) + \sum_{y \in Y} (p(y | x, q[e]) * log(p(y | x, q[e])))
+
     Args:
         entity: str - the entity of interest
         contexts: List[str] - list of contexts prepended to the query
@@ -292,9 +298,13 @@ def estimate_cmi(
         answer_map - dict from the answer support (as an int) to the tokens which qualify into the respective answer.
         bs - batch size to use for scoring the model
         answer_entity - the entity representing the "answer" to a question. Formatted into closed queries.
+
+    Returns:
+        sus_score - the susceptibility score for the given entity
+        persuasion_scores - the persuasion scores each context for the given entity
     """
     contexts_counter = Counter(contexts)
-    contexts_set = set(contexts)
+    contexts_set = sorted(list(set(contexts)))
 
     prob_x_given_e = estimate_prob_x_given_e(entity, contexts_set, contexts_counter=contexts_counter)  # shape: (|X|,)
     prob_y_given_context_and_entity = estimate_prob_y_given_context_and_entity(
@@ -311,7 +321,19 @@ def estimate_cmi(
     prob_x_y_given_e = np.einsum("ij, i -> ij", prob_y_given_context_and_entity, prob_x_given_e)  # shape: (|X|, |Y|)
     prob_y_given_e = np.einsum("ij, i -> j", prob_y_given_context_and_entity, prob_x_given_e)  # shape: (|Y|,)
 
-    return np.sum(prob_x_y_given_e * np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e)))
+    sus_score: np.float16 = np.sum(
+        prob_x_y_given_e * np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e))
+    )  # shape: ()
+
+    H_y_given_e: np.float16 = -np.sum(prob_y_given_e * np.nan_to_num(np.log(prob_y_given_e)))  # shape: ()
+    H_y_given_x_e: np.float16 = -np.sum(
+        prob_y_given_context_and_entity * np.nan_to_num(np.log(prob_y_given_context_and_entity)), axis=1
+    )  # shape: (|X|,)
+    persuasion_scores: np.ndarray = H_y_given_e - H_y_given_x_e  # shape: (|X|,)
+    context_to_pscore = {context: score for context, score in zip(contexts_set, persuasion_scores)}
+    persuasion_scores: List[float] = [context_to_pscore[context] for context in contexts]  # shape: (len(contexts),)
+
+    return sus_score, persuasion_scores
 
 
 def kl_div(p, q):
