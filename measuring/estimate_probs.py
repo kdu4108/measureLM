@@ -135,6 +135,35 @@ def score_model_for_next_word_prob(
     return last_word_logits
 
 
+def generate(
+    prompts: List[str],
+    model,
+    tokenizer,
+    max_output_length,
+    start: int = 0,
+    end: Optional[int] = None,
+) -> torch.FloatTensor:
+    """
+    Args:
+        prompts - list of prompts on which to score the model and get probability distribution for next word
+        model
+        tokenizer
+        start, end - optional indices at which to slice the prompts dataset for scoring. By default, slice the whole dataset.
+        max_output_length - how many tokens to generate
+
+    Returns:
+        (end-start, max_output_length)-shaped torch long tensor representing the generated outputfor all prompts in range start:end.
+    """
+    tokens = tokenizer(prompts[start:end], padding=True, return_tensors="pt").to(
+        model.device
+    )  # shape: (len(contexts), max_context_width)
+    output_tokens = model.generate(**tokens, max_length=len(tokens["input_ids"][0]) + max_output_length)[
+        :, -max_output_length:
+    ]
+
+    return output_tokens
+
+
 def determine_bs(f, model, tokenizer, prompts, **kwargs):
     raise NotImplementedError("TODO for when I want to optimize for efficiently maxing out GPU usage in batch scoring")
 
@@ -265,7 +294,7 @@ def sample_y_given_x_and_entity(
     tokenizer: AutoTokenizer,
     num_samples=1,
     max_output_length=10,
-    # bs=32,
+    bs=32,
     answer_entity: Optional[str] = None,
 ) -> torch.LongTensor:
     """
@@ -291,14 +320,14 @@ def sample_y_given_x_and_entity(
         print("Setting model.config.pad_token_id to model.config.eos_token_id")
         model.config.pad_token_id = model.config.eos_token_id
 
-    tokens = tokenizer(
-        complete_queries,
-        padding=True,
-        return_tensors="pt",
-    ).to(model.device)
-    output_tokens = model.generate(**tokens, max_length=len(tokens["input_ids"][0]) + max_output_length)[
-        :, -max_output_length:
-    ]
+    output_tokens = sharded_score_model(
+        f=generate,
+        model=model,
+        tokenizer=tokenizer,
+        prompts=complete_queries,
+        bs=bs,
+        max_output_length=max_output_length,
+    )
 
     return output_tokens  # shape: (len(contexts), max_output_length)
 
@@ -427,6 +456,7 @@ def compute_memorization_ratio(
     model,
     tokenizer,
     context_template: str,
+    bs: int = 32,
     answer_entity: Optional[str] = None,
 ) -> Tuple[float, List[int], List[str]]:
     """
@@ -458,9 +488,9 @@ def compute_memorization_ratio(
         model=model,
         tokenizer=tokenizer,
         num_samples=1,
-        # bs=32,
+        bs=bs,
         answer_entity=answer_entity,
-    )
+    ).long()
 
     outputs: List[str] = tokenizer.batch_decode(output_tokens)  # shape: (len(contexts),)
     context_answers: List[str] = [
@@ -474,7 +504,7 @@ def compute_memorization_ratio(
             "No" if "{answer}" in query else context_answers[i],
         )
         for i, output in enumerate(outputs)
-    ]
+    ]  # TODO: fix this for when we add closed queries with the expected answer being No.
 
     answergroup_counts = pd.Series(og_or_ctx_answers).value_counts()
     og_counts = answergroup_counts.get(AnswerGroup.ORIGINAL, default=0)

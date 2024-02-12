@@ -409,6 +409,7 @@ def main():
                 model=model,
                 tokenizer=tokenizer,
                 context_template=dataset.context_templates[0],
+                bs=BATCH_SZ,
                 answer_entity=row["answer"],
             ),
             axis=1,
