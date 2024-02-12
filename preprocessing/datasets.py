@@ -738,7 +738,7 @@ class YagoECQ(EntityContextQueryDataset):
         self.uniform_contexts = uniform_contexts
         self.deduplicate_entities = deduplicate_entities
         self.entity_selection_func = getattr(sys.modules[__name__], entity_selection_func_name)
-
+        self.context_templates = self._extract_context_templates()
         self.load_or_build_entities_contexts_and_queries(
             entities_path=entities_path,
             queries_path=queries_path,
@@ -746,6 +746,10 @@ class YagoECQ(EntityContextQueryDataset):
             answers_path=answers_path,
         )
         self.qid_to_query_entity_context_dict = self.construct_query_entity_context_dict()
+
+    def _extract_context_templates(self) -> List[str]:
+        yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
+        return yago_qec["context_templates"]
 
     def _read_entities(self, yago_qec: dict) -> List[str]:
         """Helper to read the eligible entities from yago_qec"""
@@ -872,7 +876,6 @@ class YagoECQ(EntityContextQueryDataset):
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
         entities: List[str] = self._read_entities(yago_qec)
         answers: List[str] = yago_qec["answers"]
-        context_templates: List[str] = yago_qec["context_templates"]
 
         context_per_entity_per_answer: List[str] = []
         for entity in entities:
@@ -883,7 +886,7 @@ class YagoECQ(EntityContextQueryDataset):
                 #       OR if you're keeping relevant contexts, then include only countries in self.entities.
                 # self.entities is a list of single-element tuples
                 for answer in answers:
-                    for context_template in context_templates:
+                    for context_template in self.context_templates:
                         context_per_entity_per_answer.append(
                             (entity, answer, context_template.format(entity=entity, answer=answer))
                         )

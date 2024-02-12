@@ -1,4 +1,5 @@
 import argparse
+from ast import literal_eval
 import gc
 import hashlib
 import json
@@ -14,7 +15,7 @@ import torch
 import numpy as np
 import wandb
 
-from measuring.estimate_probs import estimate_cmi
+from measuring.estimate_probs import compute_memorization_ratio, estimate_cmi
 from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ, EntityContextQueryDataset
 from preprocessing.utils import extract_name_from_yago_uri, format_query
 
@@ -37,6 +38,13 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device):
     torch.cuda.empty_cache()
     gc.collect()
     return model, tokenizer
+
+
+def get_context_template(yago_qec: dict, query_id: str):
+    # For now, we extract it from the query forms.
+    # Probably we would want to extract it from its own key though.
+    # TODO: refactor yago_qec to have its own key for context template
+    return yago_qec[query_id]["query_forms"]["open"][1]
 
 
 def get_args():
@@ -343,6 +351,7 @@ def main():
         artifact.add_dir(local_path=data_dir)
         run.log_artifact(artifact)
 
+    model, tokenizer = None, None
     if not os.path.exists(val_results_path) or OVERWRITE:
         print("Computing susceptibility scores.")
         model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
@@ -379,8 +388,56 @@ def main():
         val_df_contexts_per_qe.drop(columns=["sus_score_and_persuasion_scores"], inplace=True)
         val_df_contexts_per_qe.to_csv(val_results_path)
     else:
-        print("Loading cached results from disk.")
-        val_df_contexts_per_qe = pd.read_csv(val_results_path)
+        print("Loading cached sus score results from disk.")
+        val_df_contexts_per_qe = pd.read_csv(
+            val_results_path,
+            index_col=0,
+            converters={"contexts": literal_eval, "entity": literal_eval, "persuasion_scores": literal_eval},
+        )
+
+    if "sampled_mr" not in val_df_contexts_per_qe.columns or OVERWRITE:
+        print("Computing memorization ratio results.")
+        if model is None or tokenizer is None:
+            model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
+
+        tqdm.pandas()
+        val_df_contexts_per_qe["mr_and_answers_and_outputs"] = val_df_contexts_per_qe.progress_apply(
+            lambda row: compute_memorization_ratio(
+                query=row["query_form"],
+                entity=row["entity"],
+                contexts=row["contexts"],
+                model=model,
+                tokenizer=tokenizer,
+                context_template=dataset.context_templates[0],
+                answer_entity=row["answer"],
+            ),
+            axis=1,
+        )
+        val_df_contexts_per_qe["sampled_mr"] = val_df_contexts_per_qe["mr_and_answers_and_outputs"].apply(
+            lambda x: x[0]
+        )
+        val_df_contexts_per_qe["sampled_answergroups"] = val_df_contexts_per_qe["mr_and_answers_and_outputs"].apply(
+            lambda x: x[1]
+        )
+        val_df_contexts_per_qe["sampled_outputs"] = val_df_contexts_per_qe["mr_and_answers_and_outputs"].apply(
+            lambda x: x[2]
+        )
+        val_df_contexts_per_qe.drop(columns=["mr_and_answers_and_outputs"], inplace=True)
+        val_df_contexts_per_qe.to_csv(val_results_path)
+    else:
+        print("Loading cached sus score and mr score results from disk.")
+        val_df_contexts_per_qe = pd.read_csv(
+            val_results_path,
+            index_col=0,
+            converters={
+                "contexts": literal_eval,
+                "entity": literal_eval,
+                "persuasion_scores": literal_eval,
+                "sampled_mr": literal_eval,
+                "sampled_answergroups": literal_eval,
+                "sampled_outputs": literal_eval,
+            },
+        )
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     if LOG_DATASETS:
