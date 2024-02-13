@@ -272,7 +272,7 @@ def main():
     ANSWER_MAP = {int(k): v for k, v in args.ANSWER_MAP.items()} if args.ANSWER_MAP else None
 
     # Model parameters
-    BATCH_SZ = 16
+    BATCH_SZ = 32
 
     # wandb stuff
     PROJECT_NAME = "context-vs-bias"
