@@ -377,10 +377,15 @@ class FriendEnemy(EntityContextQueryDataset):
         entities_path: Optional[str] = None,
         queries_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
+        answers_path: Optional[str] = None,
         # save_dir: str = None,
         max_entities: int = None,
         max_contexts: int = None,
         cap_per_type: bool = False,
+        ablate_out_relevant_contexts: bool = False,
+        uniform_contexts: bool = False,
+        deduplicate_entities: bool = False,
+        entity_selection_func_name: str = "random_sample",
         seed: Optional[int] = None,
         raw_data_path: Optional[str] = "../data/FriendEnemy/raw-friend-enemy.csv",
         overwrite: bool = False,
@@ -525,7 +530,9 @@ class FriendEnemy(EntityContextQueryDataset):
             "friend-enemy": [
                 "Q: Are {} and {} friends or enemies?\nA:",
                 "Q: How friendly are {} and {}?\nA:",
+                "Q: What is the relationship between {} and {}?\nA:",
                 "{} and {} are",
+                "The relationship between {} and {} is",
             ],
         }
 
