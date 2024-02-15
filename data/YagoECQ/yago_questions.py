@@ -280,7 +280,7 @@ yago_topic_to_qfs = {
             "The highest point of {entity} is",
         ],
     },
-    "http://schema.org/homeLocation": {
+    "reverse-http://schema.org/homeLocation": {
         "closed": [
             "Q: Did {answer} ever live in {entity}?\nA:",
             "Q: Was {entity} ever a place in which {answer} lived?\nA:",
@@ -290,7 +290,7 @@ yago_topic_to_qfs = {
             "Someone who lived in {entity} is",
         ],
     },
-    "reverse-http://schema.org/homeLocation": {
+    "http://schema.org/homeLocation": {
         "closed": [
             "Q: Did {entity} ever live in {answer}?\nA:",
             "Q: Was {answer} ever a place in which {entity} lived?\nA:",
