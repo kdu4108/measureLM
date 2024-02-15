@@ -528,11 +528,15 @@ class FriendEnemy(EntityContextQueryDataset):
         """
         query_id_to_queries: Dict[QueryID, List[str]] = {
             "friend-enemy": [
-                "Q: Are {} and {} friends or enemies?\nA:",
-                "Q: How friendly are {} and {}?\nA:",
-                "Q: What is the relationship between {} and {}?\nA:",
-                "{} and {} are",
+                # "Q: Are {} and {} friends or enemies?\nA:",
+                # "Q: How friendly are {} and {}?\nA:",
+                # "Q: What is the relationship between {} and {}?\nA:",
+                # "{} and {} are",
                 "The relationship between {} and {} is",
+                "Q: On a scale of 1-5, where 1 indicates worst enemies and 5 indicates best friends, how friendly are {} and {}?\nA:",
+                "On a scale of 1-5, where 1 indicates worst enemies and 5 indicates best friends, the friendliness level of {} and {} is",
+                "Q: On a scale of 1-5, how friendly are {} and {}?\nA:",
+                "On a scale of 1-5, the friendliness level of {} and {} is",
             ],
         }
 
