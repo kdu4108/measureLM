@@ -270,6 +270,7 @@ def main():
     ENTITY_TYPES = args.ENTITY_TYPES
     QUERY_TYPES = args.QUERY_TYPES
     ANSWER_MAP = {int(k): v for k, v in args.ANSWER_MAP.items()} if args.ANSWER_MAP else None
+    COMPUTE_MR = False
 
     # Model parameters
     BATCH_SZ = 32
@@ -395,7 +396,7 @@ def main():
             converters={"contexts": literal_eval, "entity": literal_eval, "persuasion_scores": literal_eval},
         )
 
-    if "sampled_mr" not in val_df_contexts_per_qe.columns or OVERWRITE:
+    if COMPUTE_MR and ("sampled_mr" not in val_df_contexts_per_qe.columns or OVERWRITE):
         print("Computing memorization ratio results.")
         if model is None or tokenizer is None:
             model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)

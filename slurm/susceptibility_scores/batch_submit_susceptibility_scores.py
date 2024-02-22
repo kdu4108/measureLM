@@ -11,7 +11,7 @@ with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [1]
+seeds = [1, 3, 4]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -20,7 +20,7 @@ if RUN_LOCALLY:
     query_ids = list(yago_qec.keys())[:5]
 else:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    max_contexts = [500]
+    max_contexts = [1000]
     max_entities = [100]
     query_ids = list(yago_qec.keys())
     # query_ids = ["http://yago-knowledge.org/resource/capital"]
