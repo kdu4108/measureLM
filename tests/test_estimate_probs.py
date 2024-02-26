@@ -5,6 +5,7 @@ import unittest as ut
 from unittest.mock import patch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from measuring.estimate_probs import (
+    compute_memorization_ratio,
     estimate_prob_y_given_context_and_entity,
     estimate_prob_x_given_e,
     estimate_prob_next_word_given_x_and_entity,
@@ -14,6 +15,7 @@ from measuring.estimate_probs import (
     sharded_score_model,
     estimate_entity_score,
     kl_div,
+    extract_answer,
 )
 
 
@@ -702,3 +704,96 @@ class TestEstimateEntityScores(ut.TestCase):
         )  # interestingly, this also happens to equal the MI of ln(4) (entropy of the answer distribution)!
 
         assert np.isclose(actual, expected)
+
+
+class TestMemorizationRatio(ut.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.model_name = "gpt2"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        cls.model = AutoModelForCausalLM.from_pretrained(
+            cls.model_name,
+        ).to(device)
+
+        cls.tokenizer = AutoTokenizer.from_pretrained(
+            cls.model_name,
+            padding_side="left",
+        )
+        cls.tokenizer.pad_token = cls.tokenizer.eos_token
+        cls.model.config.pad_token_id = cls.model.config.eos_token_id
+
+    @patch("measuring.estimate_probs.sample_y_given_x_and_entity")
+    @patch("measuring.estimate_probs.extract_answer")
+    def test_memorization_ratio_no_context_answers(self, mock_extract_answer, mock_sample_y_given_x_and_entity):
+        model = type(self).model
+        tokenizer = type(self).tokenizer
+
+        # tokenizer(993) = "ah", tokenizer(992) = "led"
+        mock_sample_y_given_x_and_entity.return_value = torch.tensor([993, 992], dtype=torch.long)
+        mock_extract_answer.side_effect = [
+            "ah",
+            "China",
+        ]
+        answer_entity = "ah"
+
+        context_template = "this is my context template {entity} {answer}"
+        contexts = ["The movie was great. ", "I loved it. "]
+        query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
+        entity = "entity1"
+
+        actual = compute_memorization_ratio(
+            query,
+            entity,
+            contexts,
+            model,
+            tokenizer,
+            context_template,
+            bs=32,
+            answer_entity=answer_entity,
+        )
+        expected = (1.0, [0, 2], ["ah", "led"])
+
+        assert actual == expected
+
+    @patch("measuring.estimate_probs.sample_y_given_x_and_entity")
+    @patch("measuring.estimate_probs.extract_answer")
+    def test_memorization_ratio_with_context_answer(self, mock_extract_answer, mock_sample_y_given_x_and_entity):
+        model = type(self).model
+        tokenizer = type(self).tokenizer
+
+        # tokenizer(993) = "ah", tokenizer(992) = "led"
+        mock_sample_y_given_x_and_entity.return_value = torch.tensor([993, 992], dtype=torch.long)
+        mock_extract_answer.side_effect = [
+            "nope",
+            "led",
+        ]
+        answer_entity = "ah"
+
+        context_template = "this is my context template {entity} {answer}"
+        contexts = ["The movie was great. ", "I loved it. "]
+        query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
+        entity = "entity1"
+
+        actual = compute_memorization_ratio(
+            query,
+            entity,
+            contexts,
+            model,
+            tokenizer,
+            context_template,
+            bs=32,
+            answer_entity=answer_entity,
+        )
+        expected = (0.5, [0, 1], ["ah", "led"])
+
+        assert actual == expected
+
+
+class TestExtractAnswer(ut.TestCase):
+    def test_extract_answer(self):
+        context_template = "The highest point of {entity} is {answer}.\n"
+        sentence = "The highest point of Jamaica is Asia.\n"
+
+        expected = "Asia"
+        actual = extract_answer(context_template=context_template, sentence=sentence)
+        assert actual == expected
