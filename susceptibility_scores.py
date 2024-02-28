@@ -113,6 +113,7 @@ def construct_paths_and_dataset_kwargs(
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
+    verbose=False,
 ):
     DATASET_KWARGS_IDENTIFIABLE = dict(
         max_contexts=MAX_CONTEXTS,
@@ -227,8 +228,9 @@ def construct_paths_and_dataset_kwargs(
     results_dir = os.path.join(model_dir, "results")
     val_results_path = os.path.join(results_dir, "val.csv")
 
-    print(f"Data dir: {data_dir}")
-    print(f"Model dir: {model_dir}")
+    if verbose:
+        print(f"Data dir: {data_dir}")
+        print(f"Model dir: {model_dir}")
 
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
@@ -319,6 +321,7 @@ def main():
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
         ANSWER_MAP=ANSWER_MAP,
+        verbose=True,
     )
     # GPU stuff
     device = "cuda" if torch.cuda.is_available() else "cpu"
