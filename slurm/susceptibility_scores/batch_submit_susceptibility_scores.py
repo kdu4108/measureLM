@@ -11,7 +11,7 @@ with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [1, 3, 4]
+seeds = [5]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -19,8 +19,14 @@ if RUN_LOCALLY:
     max_entities = [5]
     query_ids = list(yago_qec.keys())[:5]
 else:
-    model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    max_contexts = [1000]
+    model_id_and_quantize_tuples = [
+        # ("EleutherAI/pythia-70m-deduped", False),
+        # ("EleutherAI/pythia-410m-deduped", False),
+        # ("EleutherAI/pythia-1.4b-deduped", False),
+        ("EleutherAI/pythia-6.9b-deduped", True),
+        # ("EleutherAI/pythia-12b-deduped", True),
+    ]
+    max_contexts = [500]
     max_entities = [100]
     query_ids = list(yago_qec.keys())
     # query_ids = ["http://yago-knowledge.org/resource/capital"]
@@ -66,6 +72,9 @@ ablate = False
 deduplicate_entities = True
 uniform_contexts = True
 overwrite = False
+
+compute_mr = True
+batch_sz = 32
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:
@@ -129,12 +138,15 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{answer_map_in_tokens}",
                                         "-ES",
                                         f"{es}",
+                                        "-BS",
+                                        f"{batch_sz}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-MR"] if compute_mr else [])
                                     + (["-O"] if overwrite else [])
                                 )
                             else:
@@ -153,12 +165,14 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{query_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
+                                        f"{batch_sz}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-MR"] if compute_mr else [])
                                     + (["-O"] if overwrite else [])
                                 )
                                 print(cmd)

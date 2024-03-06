@@ -40,13 +40,6 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device):
     return model, tokenizer
 
 
-def get_context_template(yago_qec: dict, query_id: str):
-    # For now, we extract it from the query forms.
-    # Probably we would want to extract it from its own key though.
-    # TODO: refactor yago_qec to have its own key for context template
-    return yago_qec[query_id]["query_forms"]["open"][1]
-
-
 def get_args():
     parser = argparse.ArgumentParser(description="Arguments for computing susceptibility scores.")
     parser.add_argument("DATASET_NAME", type=str, help="Name of the dataset class")
@@ -80,17 +73,24 @@ def get_args():
         help="Name of the entity selection function name. Must be one of the functions in preprocessing.utils",
     )
     parser.add_argument(
-        "-O",
-        "--OVERWRITE",
-        action="store_true",
-        help="Whether to overwrite existing results and recompute susceptibility scores",
-    )
-    parser.add_argument(
         "-ET", "--ENTITY_TYPES", type=json.loads, default=["entities", "gpt_fake_entities"], help="Entity types to use"
     )
     parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed"], help="Query types to use")
     parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
+    )
+    parser.add_argument(
+        "-MR",
+        "--COMPUTE_MR",
+        action="store_true",
+        help="Whether to compute the memorization ratio",
+    )
+    parser.add_argument("-BS", "--BATCH_SIZE", type=int, default=32, help="Batch size for inference")
+    parser.add_argument(
+        "-O",
+        "--OVERWRITE",
+        action="store_true",
+        help="Whether to overwrite existing results and recompute susceptibility scores",
     )
     return parser.parse_args()
 
@@ -272,10 +272,10 @@ def main():
     ENTITY_TYPES = args.ENTITY_TYPES
     QUERY_TYPES = args.QUERY_TYPES
     ANSWER_MAP = {int(k): v for k, v in args.ANSWER_MAP.items()} if args.ANSWER_MAP else None
-    COMPUTE_MR = False
+    COMPUTE_MR = args.COMPUTE_MR
 
     # Model parameters
-    BATCH_SZ = 32
+    BATCH_SZ = args.BATCH_SIZE
 
     # wandb stuff
     PROJECT_NAME = "context-vs-bias"
@@ -345,11 +345,11 @@ def main():
     val_df_contexts_per_qe = dataset.get_contexts_per_query_entity_df()
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
-    if LOG_DATASETS:
-        print(f"Saving datasets to {input_dir}.")
-        os.makedirs(input_dir, exist_ok=True)
-        val_df_contexts_per_qe.to_csv(val_data_path)
+    print(f"Saving datasets to {input_dir}.")
+    os.makedirs(input_dir, exist_ok=True)
+    val_df_contexts_per_qe.to_csv(val_data_path)
 
+    if LOG_DATASETS:
         print(f"Logging datasets to w&b run {wandb.run}.")
         artifact = wandb.Artifact(name=data_id, type="dataset")
         artifact.add_dir(local_path=data_dir)

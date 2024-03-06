@@ -70,7 +70,7 @@ def construct_df_given_query_id(
         ANSWER_MAP=ANSWER_MAP,
     )
     # Analysis dir
-    analysis_dir = os.path.join(data_dir, "analysis")
+    analysis_dir = os.path.join(model_dir, "analysis")
     save_path = os.path.join(analysis_dir, "val_df_per_qe.csv")
 
     os.makedirs(input_dir, exist_ok=True)
@@ -80,12 +80,15 @@ def construct_df_given_query_id(
 
     if verbose:
         print(f"Analysis dir: {analysis_dir}")
+        print(f"Results dir: {results_dir}")
+        print(f"Model dir: {model_dir}")
+        print(f"Data id: {data_id}")
 
+    artifact_name = f"{data_id}-{SEED}-{model_id}-val_df_per_qe".replace("/", ".")
+    artifact_name = f"val_df_per_qe-{hashlib.sha256(artifact_name.encode()).hexdigest()[:8]}"
     if wandb.run is not None and not os.path.exists(save_path):
         # TODO: this might result in bugs if we need to recompute.
         # Download val_df_per_qe from wandb (if not already cached there)
-        artifact_name = f"{data_id}-{model_id}-val_df_per_qe".replace("/", ".")
-        artifact_name = f"val_df_per_qe-{hashlib.sha256(artifact_name.encode()).hexdigest()[:8]}"
         artifact, files = load_artifact_from_wandb(artifact_name, save_dir=analysis_dir, verbose=verbose)
 
     if not overwrite_df and os.path.exists(save_path):

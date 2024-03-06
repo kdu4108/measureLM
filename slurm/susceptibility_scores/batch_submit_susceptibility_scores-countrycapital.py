@@ -5,7 +5,7 @@ from typing import List, Dict
 from transformers import AutoTokenizer
 
 
-RUN_LOCALLY = False
+RUN_LOCALLY = True
 YAGO_QEC_PATH = "data/YagoECQ/yago_qec.json"  # assuming you are running from the root project directory
 COUNTRY_CAPITAL_PATH = "data/CountryCapital/yago-real-gpt-fake-country-capital.csv"
 with open(YAGO_QEC_PATH) as f:
@@ -53,6 +53,9 @@ ablate = False
 deduplicate_entities = False
 uniform_contexts = False
 overwrite = True
+
+compute_mr = False
+batch_sz = 32
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:
@@ -116,6 +119,8 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{answer_map_in_tokens}",
                                         "-ES",
                                         f"{es}",
+                                        "-BS",
+                                        f"{batch_sz}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
@@ -140,6 +145,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{query_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
+                                        f"{batch_sz}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
