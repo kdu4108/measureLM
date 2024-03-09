@@ -9,6 +9,7 @@ wandb/
 *.csv
 *.xlsx
 *.png
+*.pdf
 
 ## user defines
 reconnect_info
