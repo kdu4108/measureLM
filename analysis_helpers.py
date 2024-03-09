@@ -48,6 +48,7 @@ def construct_df_given_query_id(
         model_dir,
         results_dir,
         val_results_path,
+        mr_results_path,
         data_id,
         model_id,
         DATASET_KWARGS_IDENTIFIABLE,

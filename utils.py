@@ -160,6 +160,7 @@ def construct_paths_and_dataset_kwargs(
     # Results path
     results_dir = os.path.join(model_dir, "results")
     val_results_path = os.path.join(results_dir, "val.csv")
+    mr_results_path = os.path.join(results_dir, "mr.csv")
 
     if verbose:
         print(f"Data dir: {data_dir}")
@@ -180,6 +181,7 @@ def construct_paths_and_dataset_kwargs(
         model_dir,
         results_dir,
         val_results_path,
+        mr_results_path,
         data_id,
         model_id,
         DATASET_KWARGS_IDENTIFIABLE,

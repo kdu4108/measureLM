@@ -142,6 +142,7 @@ def main():
         model_dir,
         results_dir,
         val_results_path,
+        mr_results_path,
         data_id,
         model_id,
         DATASET_KWARGS_IDENTIFIABLE,
@@ -185,35 +186,43 @@ def main():
 
     dataset: EntityContextQueryDataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
     val_df_contexts_per_qe = dataset.get_contexts_per_query_entity_df()
+    mr_per_qe_df = val_df_contexts_per_qe.copy()
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     print(f"Saving datasets to {input_dir}.")
     os.makedirs(input_dir, exist_ok=True)
     val_df_contexts_per_qe.to_csv(val_data_path)
 
-    if LOG_DATASETS:
-        print(f"Logging datasets to w&b run {wandb.run}.")
-        artifact = wandb.Artifact(name=data_id, type="dataset")
-        artifact.add_dir(local_path=data_dir)
-        run.log_artifact(artifact)
+    # if LOG_DATASETS:
+    #     print(f"Logging datasets to w&b run {wandb.run}.")
+    #     artifact = wandb.Artifact(name=data_id, type="dataset")
+    #     artifact.add_dir(local_path=data_dir)
+    #     run.log_artifact(artifact)
 
     model, tokenizer = None, None
     try:
-        print("Loading cached sus score results with MR from disk.")
-        val_df_contexts_per_qe_cached = pd.read_csv(
+        print("Attempting to load cached sus score results from disk.")
+        val_df_contexts_per_qe = pd.read_csv(
             val_results_path,
             index_col=0,
-            # converters={
-            #     "contexts": literal_eval,
-            #     "entity": literal_eval,
-            #     "persuasion_scores": literal_eval,
-            #     "sampled_mr": literal_eval,
-            #     "sampled_answergroups": literal_eval,
-            #     "sampled_outputs": literal_eval,
-            # },
         )
-        if "sampled_mr" in val_df_contexts_per_qe_cached.columns:
-            mr_per_qe = val_df_contexts_per_qe_cached[
+        print("\tSuccessfully loaded cached sus score results from disk.")
+    except FileNotFoundError:
+        print("\tNo cached results found for susceptibility score results. Continuing.")
+
+    try:
+        print("Attempting to load cached MR results from disk.")
+        mr_per_qe_df = pd.read_csv(mr_results_path, index_col=0)
+        print("\tSuccessfully loaded cached MR results from disk.")
+    except FileNotFoundError:
+        print(
+            "\tNo cached results found for memorization ratio results at `mr_results_path`. Attempting to construct from val_df_contexts_per_qe."
+        )
+        if "sampled_mr" in val_df_contexts_per_qe.columns:
+            print(
+                f"\t\tConstructing memorization ratio results from val_df_contexts_per_qe and saving to disk at {mr_results_path}."
+            )
+            mr_per_qe_df = val_df_contexts_per_qe[
                 [
                     "q_id",
                     "query_form",
@@ -225,13 +234,15 @@ def main():
                     "sampled_outputs",
                 ]
             ]
-            print(mr_per_qe)
-    except FileNotFoundError:
-        val_df_contexts_per_qe = None
-        print("No cached results found. Computing susceptibility scores.")
+            mr_per_qe_df.to_csv(mr_results_path)
+            val_df_contexts_per_qe = val_df_contexts_per_qe.drop(
+                columns=["sampled_mr", "sampled_answergroups", "sampled_outputs"]
+            )
+        else:
+            print("\t\tFailed to construct memorization ratio results from val_df_contexts_per_qe.")
 
     if (
-        val_df_contexts_per_qe is None
+        not os.path.exists(val_results_path)
         or (COMPUTE_P_SCORE_KL and "persuasion_scores_kl" not in val_df_contexts_per_qe.columns)
         or OVERWRITE
     ):
@@ -273,20 +284,20 @@ def main():
         val_df_contexts_per_qe.drop(columns=["sus_score_and_persuasion_scores"], inplace=True)
         val_df_contexts_per_qe.to_csv(val_results_path)
     else:
-        print("Loading cached sus score results from disk.")
-        val_df_contexts_per_qe = pd.read_csv(
-            val_results_path,
-            index_col=0,
-            converters={"contexts": literal_eval, "entity": literal_eval, "persuasion_scores": literal_eval},
-        )
+        print("All cached sus score results already on disk.")
+        # val_df_contexts_per_qe = pd.read_csv(
+        #     val_results_path,
+        #     index_col=0,
+        #     converters={"contexts": literal_eval, "entity": literal_eval, "persuasion_scores": literal_eval},
+        # )
 
-    if COMPUTE_MR and ("sampled_mr" not in val_df_contexts_per_qe.columns or OVERWRITE):
+    if COMPUTE_MR and ("sampled_mr" not in mr_per_qe_df.columns or OVERWRITE):
         print("Computing memorization ratio results.")
         if model is None or tokenizer is None:
             model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
 
         tqdm.pandas()
-        val_df_contexts_per_qe["mr_and_answers_and_outputs"] = val_df_contexts_per_qe.progress_apply(
+        mr_per_qe_df["mr_and_answers_and_outputs"] = mr_per_qe_df.progress_apply(
             lambda row: compute_memorization_ratio(
                 query=row["query_form"],
                 entity=row["entity"],
@@ -299,19 +310,13 @@ def main():
             ),
             axis=1,
         )
-        val_df_contexts_per_qe["sampled_mr"] = val_df_contexts_per_qe["mr_and_answers_and_outputs"].apply(
-            lambda x: x[0]
-        )
-        val_df_contexts_per_qe["sampled_answergroups"] = val_df_contexts_per_qe["mr_and_answers_and_outputs"].apply(
-            lambda x: x[1]
-        )
-        val_df_contexts_per_qe["sampled_outputs"] = val_df_contexts_per_qe["mr_and_answers_and_outputs"].apply(
-            lambda x: x[2]
-        )
-        val_df_contexts_per_qe.drop(columns=["mr_and_answers_and_outputs"], inplace=True)
-        val_df_contexts_per_qe.to_csv(val_results_path)
+        mr_per_qe_df["sampled_mr"] = mr_per_qe_df["mr_and_answers_and_outputs"].apply(lambda x: x[0])
+        mr_per_qe_df["sampled_answergroups"] = mr_per_qe_df["mr_and_answers_and_outputs"].apply(lambda x: x[1])
+        mr_per_qe_df["sampled_outputs"] = mr_per_qe_df["mr_and_answers_and_outputs"].apply(lambda x: x[2])
+        mr_per_qe_df.drop(columns=["mr_and_answers_and_outputs"], inplace=True)
+        mr_per_qe_df.to_csv(mr_results_path)
     else:
-        print("Loading cached sus score and mr score results from disk.")
+        print("MR already computed in `mr_results_path` cached on disk.")
         # val_df_contexts_per_qe = pd.read_csv(
         #     val_results_path,
         #     index_col=0,
