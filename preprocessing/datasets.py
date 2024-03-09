@@ -7,7 +7,7 @@ import json
 import random
 import sys
 
-import torch
+# import torch
 from tqdm import tqdm
 from typing import Optional, Dict, List, Any, Tuple
 from preprocessing.utils import format_query, random_sample, top_entity_namesake_degree, top_entity_uri_degree

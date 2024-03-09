@@ -11,7 +11,7 @@ with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [5]
+seeds = [9, 10]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -29,6 +29,19 @@ else:
     max_contexts = [500]
     max_entities = [100]
     query_ids = list(yago_qec.keys())
+    # query_ids = list(
+    #     set(query_ids).difference(
+    #         {
+    #             "http://schema.org/material",
+    #             "http://schema.org/numberOfEpisodes",
+    #             "http://schema.org/musicBy",
+    #             "http://schema.org/neighbors",
+    #             "http://schema.org/lyricist",
+    #             "http://schema.org/manufacturer",
+    #         }
+    #     )
+    # )
+
     # query_ids = ["http://yago-knowledge.org/resource/capital"]
     # query_ids = ["http://schema.org/founder"]
 
@@ -73,8 +86,8 @@ deduplicate_entities = True
 uniform_contexts = True
 overwrite = False
 
-compute_mr = True
-batch_sz = 32
+compute_mr = False
+batch_sz = 16
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:

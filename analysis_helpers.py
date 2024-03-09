@@ -6,7 +6,8 @@ import hashlib
 import pandas as pd
 import numpy as np
 import random
-import torch
+
+# import torch
 import wandb
 
 from susceptibility_scores import construct_paths_and_dataset_kwargs
@@ -100,7 +101,7 @@ def construct_df_given_query_id(
         print(f"Computing val_df_per_qe for {QUERY_ID}.")
 
         # Set random seeds
-        torch.manual_seed(SEED)
+        # torch.manual_seed(SEED)
         np.random.seed(SEED)
         random.seed(SEED)
 
