@@ -376,6 +376,33 @@ def extract_answer(context_template: str, sentence: str):
     return None
 
 
+def p_score_ent_diff(prob_y_given_e, prob_y_given_context_and_entity):
+    """
+    Defining p_score as:
+      H(Y|E=e) - H(Y|X=x, E=e)
+    Return shape: (|X|,)
+    """
+    H_y_given_e: np.float16 = -np.sum(prob_y_given_e * np.nan_to_num(np.log(prob_y_given_e)))  # shape: ()
+    H_y_given_x_e: np.float16 = -np.sum(
+        prob_y_given_context_and_entity * np.nan_to_num(np.log(prob_y_given_context_and_entity)), axis=1
+    )  # shape: (|X|,)
+    persuasion_scores: np.ndarray = H_y_given_e - H_y_given_x_e  # shape: (|X|,)
+    return persuasion_scores
+
+
+def p_score_kl(prob_y_given_e, prob_y_given_context_and_entity):
+    """
+    Defining p_score as:
+      \sum_{y \in Y} p(y | X=x, E=e) * log(p(y | X=x, E=e) / p(y | E=e) # noqa
+    Return shape: (|X|,)
+    """
+    log_prob_ratio = np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e))  # shape: (|X|, |Y|)
+    persuasion_scores: np.ndarray = np.sum(
+        prob_y_given_context_and_entity * log_prob_ratio, axis=1
+    )  # shape: (|X|, |Y|)
+    return persuasion_scores
+
+
 def estimate_cmi(
     query: str,
     entity: str,
@@ -438,15 +465,19 @@ def estimate_cmi(
         prob_x_y_given_e * np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e))
     )  # shape: ()
 
-    H_y_given_e: np.float16 = -np.sum(prob_y_given_e * np.nan_to_num(np.log(prob_y_given_e)))  # shape: ()
-    H_y_given_x_e: np.float16 = -np.sum(
-        prob_y_given_context_and_entity * np.nan_to_num(np.log(prob_y_given_context_and_entity)), axis=1
-    )  # shape: (|X|,)
-    persuasion_scores: np.ndarray = H_y_given_e - H_y_given_x_e  # shape: (|X|,)
-    context_to_pscore = {context: score for context, score in zip(contexts_set, persuasion_scores)}
-    persuasion_scores: List[float] = [context_to_pscore[context] for context in contexts]  # shape: (len(contexts),)
+    # Two possible views of persuasion score: should it be H(Y | q[e]) - H(Y | X=x, q[e]) OR \sum_{y \in Y} p(y | X=x, q[e]) * log(p(y | X=x, q[e])/p(y | q[e]))?
+    persuasion_scores_ent_diff = p_score_ent_diff(prob_y_given_e, prob_y_given_context_and_entity)  # shape: (|X|,)
+    persuasion_scores_kl = p_score_kl(prob_y_given_e, prob_y_given_context_and_entity)  # shape: (|X|,)
 
-    return sus_score, persuasion_scores
+    def p_scores_per_context(p_scores):
+        context_to_pscore = {context: score for context, score in zip(contexts_set, p_scores)}
+        persuasion_scores: List[float] = [context_to_pscore[context] for context in contexts]  # shape: (len(contexts),)
+        return persuasion_scores
+
+    persuasion_scores_ent_diff = p_scores_per_context(persuasion_scores_ent_diff)
+    persuasion_scores_kl = p_scores_per_context(persuasion_scores_kl)
+
+    return sus_score, persuasion_scores_ent_diff, persuasion_scores_kl
 
 
 def compute_memorization_ratio(

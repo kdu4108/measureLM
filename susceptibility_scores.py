@@ -114,6 +114,7 @@ def main():
     QUERY_TYPES = args.QUERY_TYPES
     ANSWER_MAP = {int(k): v for k, v in args.ANSWER_MAP.items()} if args.ANSWER_MAP else None
     COMPUTE_MR = args.COMPUTE_MR
+    COMPUTE_P_SCORE_KL = True
 
     # Model parameters
     BATCH_SZ = args.BATCH_SIZE
@@ -197,7 +198,43 @@ def main():
         run.log_artifact(artifact)
 
     model, tokenizer = None, None
-    if not os.path.exists(val_results_path) or OVERWRITE:
+    try:
+        print("Loading cached sus score results with MR from disk.")
+        val_df_contexts_per_qe_cached = pd.read_csv(
+            val_results_path,
+            index_col=0,
+            # converters={
+            #     "contexts": literal_eval,
+            #     "entity": literal_eval,
+            #     "persuasion_scores": literal_eval,
+            #     "sampled_mr": literal_eval,
+            #     "sampled_answergroups": literal_eval,
+            #     "sampled_outputs": literal_eval,
+            # },
+        )
+        if "sampled_mr" in val_df_contexts_per_qe_cached.columns:
+            mr_per_qe = val_df_contexts_per_qe_cached[
+                [
+                    "q_id",
+                    "query_form",
+                    "entity",
+                    "answer",
+                    "contexts",
+                    "sampled_mr",
+                    "sampled_answergroups",
+                    "sampled_outputs",
+                ]
+            ]
+            print(mr_per_qe)
+    except FileNotFoundError:
+        val_df_contexts_per_qe = None
+        print("No cached results found. Computing susceptibility scores.")
+
+    if (
+        val_df_contexts_per_qe is None
+        or (COMPUTE_P_SCORE_KL and "persuasion_scores_kl" not in val_df_contexts_per_qe.columns)
+        or OVERWRITE
+    ):
         print("Computing susceptibility scores.")
         model, tokenizer = load_model_and_tokenizer(MODEL_ID, LOAD_IN_8BIT, device)
         answer_map_tensor = (
@@ -224,6 +261,9 @@ def main():
         val_df_contexts_per_qe["persuasion_scores"] = val_df_contexts_per_qe["sus_score_and_persuasion_scores"].apply(
             lambda x: x[1]
         )
+        val_df_contexts_per_qe["persuasion_scores_kl"] = val_df_contexts_per_qe[
+            "sus_score_and_persuasion_scores"
+        ].apply(lambda x: x[2])
         val_df_contexts_per_qe["full_query_example"] = val_df_contexts_per_qe.progress_apply(
             lambda row: format_query(
                 query=row["query_form"], entity=row["entity"], context=row["contexts"][0], answer=row["answer"]
@@ -272,18 +312,18 @@ def main():
         val_df_contexts_per_qe.to_csv(val_results_path)
     else:
         print("Loading cached sus score and mr score results from disk.")
-        val_df_contexts_per_qe = pd.read_csv(
-            val_results_path,
-            index_col=0,
-            converters={
-                "contexts": literal_eval,
-                "entity": literal_eval,
-                "persuasion_scores": literal_eval,
-                "sampled_mr": literal_eval,
-                "sampled_answergroups": literal_eval,
-                "sampled_outputs": literal_eval,
-            },
-        )
+        # val_df_contexts_per_qe = pd.read_csv(
+        #     val_results_path,
+        #     index_col=0,
+        #     converters={
+        #         "contexts": literal_eval,
+        #         "entity": literal_eval,
+        #         "persuasion_scores": literal_eval,
+        #         "sampled_mr": literal_eval,
+        #         "sampled_answergroups": literal_eval,
+        #         "sampled_outputs": literal_eval,
+        #     },
+        # )
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     if LOG_DATASETS:
