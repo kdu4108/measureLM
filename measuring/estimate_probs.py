@@ -1,5 +1,3 @@
-import hashlib
-import os
 from typing import Callable, List, Dict, Optional, Set, Tuple
 from collections import Counter
 from enum import Enum
@@ -412,7 +410,6 @@ def estimate_cmi(
     answer_map: Dict[int, List[str]] = None,
     bs: int = 32,
     answer_entity: Optional[str] = None,
-    cache_dir_root: str = ".cache/estimate_cmi/",
 ) -> Tuple[float, float]:
     """
     (1) Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
@@ -447,34 +444,17 @@ def estimate_cmi(
     contexts_counter = Counter(contexts)
     contexts_set = sorted(list(set(contexts)))
 
-    # Caching
-    cache_id = f"{query}_{entity}_{contexts}_{model.name_or_path}_{tokenizer.name_or_path}_{answer_map}_{answer_entity}"
-    cache_id = hashlib.sha256(cache_id.encode()).hexdigest()[:16]
-    cache_dir = os.path.join(cache_dir_root, cache_id)
-    prob_x_given_e_cache_path = os.path.join(cache_dir, "prob_x_given_e.npy")
-    prob_y_given_context_and_entity_cache_path = os.path.join(cache_dir, "prob_y_given_context_and_entity.npy")
-
-    if os.path.isdir(cache_dir):
-        print(f"Loading cached results from {cache_dir}")
-        prob_x_given_e = np.load(prob_x_given_e_cache_path)
-        prob_y_given_context_and_entity = np.load(prob_y_given_context_and_entity_cache_path)
-    else:
-        prob_x_given_e = estimate_prob_x_given_e(
-            entity, contexts_set, contexts_counter=contexts_counter
-        )  # shape: (|X|,)
-        prob_y_given_context_and_entity = estimate_prob_y_given_context_and_entity(
-            query,
-            entity,
-            contexts_set,
-            model,
-            tokenizer,
-            answer_map=answer_map,
-            bs=bs,
-            answer_entity=answer_entity,
-        )  # shape: (|X|, |Y|)
-        os.makedirs(cache_dir)
-        np.save(prob_x_given_e_cache_path, prob_x_given_e)
-        np.save(prob_y_given_context_and_entity_cache_path, prob_y_given_context_and_entity)
+    prob_x_given_e = estimate_prob_x_given_e(entity, contexts_set, contexts_counter=contexts_counter)  # shape: (|X|,)
+    prob_y_given_context_and_entity = estimate_prob_y_given_context_and_entity(
+        query,
+        entity,
+        contexts_set,
+        model,
+        tokenizer,
+        answer_map=answer_map,
+        bs=bs,
+        answer_entity=answer_entity,
+    )  # shape: (|X|, |Y|)
 
     prob_x_y_given_e = np.einsum("ij, i -> ij", prob_y_given_context_and_entity, prob_x_given_e)  # shape: (|X|, |Y|)
     prob_y_given_e = np.einsum("ij, i -> j", prob_y_given_context_and_entity, prob_x_given_e)  # shape: (|Y|,)
