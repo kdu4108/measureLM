@@ -397,9 +397,7 @@ def p_score_kl(prob_y_given_e, prob_y_given_context_and_entity):
     Return shape: (|X|,)
     """
     log_prob_ratio = np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e))  # shape: (|X|, |Y|)
-    persuasion_scores: np.ndarray = np.sum(
-        prob_y_given_context_and_entity * log_prob_ratio, axis=1
-    )  # shape: (|X|, |Y|)
+    persuasion_scores: np.ndarray = np.sum(prob_y_given_context_and_entity * log_prob_ratio, axis=1)  # shape: (|X|,)
     return persuasion_scores
 
 
@@ -469,8 +467,8 @@ def estimate_cmi(
     persuasion_scores_ent_diff = p_score_ent_diff(prob_y_given_e, prob_y_given_context_and_entity)  # shape: (|X|,)
     persuasion_scores_kl = p_score_kl(prob_y_given_e, prob_y_given_context_and_entity)  # shape: (|X|,)
 
-    def p_scores_per_context(p_scores):
-        context_to_pscore = {context: score for context, score in zip(contexts_set, p_scores)}
+    def p_scores_per_context(p_scores, dtype=np.float64):
+        context_to_pscore = {context: score for context, score in zip(contexts_set, p_scores.astype(dtype))}
         persuasion_scores: List[float] = [context_to_pscore[context] for context in contexts]  # shape: (len(contexts),)
         return persuasion_scores
 

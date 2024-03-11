@@ -171,8 +171,6 @@ def main():
     print(f"Using device: {device}")
 
     # wandb stuff
-    os.environ["WANDB_NOTEBOOK_NAME"] = os.path.join(os.getcwd(), "main.ipynb")
-
     params_to_log = {k: v for k, v in locals().items() if k.isupper()}
 
     run = wandb.init(
@@ -185,13 +183,12 @@ def main():
     print(dict(wandb.config))
 
     dataset: EntityContextQueryDataset = getattr(sys.modules[__name__], DATASET_NAME)(**DATASET_KWARGS_IDENTIFIABLE)
-    val_df_contexts_per_qe = dataset.get_contexts_per_query_entity_df()
-    mr_per_qe_df = val_df_contexts_per_qe.copy()
+    dataset_df = dataset.get_contexts_per_query_entity_df()
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     print(f"Saving datasets to {input_dir}.")
     os.makedirs(input_dir, exist_ok=True)
-    val_df_contexts_per_qe.to_csv(val_data_path)
+    dataset_df.to_csv(val_data_path)
 
     # if LOG_DATASETS:
     #     print(f"Logging datasets to w&b run {wandb.run}.")
@@ -200,19 +197,33 @@ def main():
     #     run.log_artifact(artifact)
 
     model, tokenizer = None, None
+
+    # Try reading in val_df_contexts_per_qe from disk in case we need to separate out the mr into its own df from there
     try:
         print("Attempting to load cached sus score results from disk.")
         val_df_contexts_per_qe = pd.read_csv(
             val_results_path,
             index_col=0,
+            converters={
+                "contexts": literal_eval,
+                "entity": literal_eval,
+            },  # required because if read in as strings, then estimate_cmi will fail
         )
         print("\tSuccessfully loaded cached sus score results from disk.")
     except FileNotFoundError:
         print("\tNo cached results found for susceptibility score results. Continuing.")
+        val_df_contexts_per_qe = dataset_df.copy()
 
     try:
         print("Attempting to load cached MR results from disk.")
-        mr_per_qe_df = pd.read_csv(mr_results_path, index_col=0)
+        mr_per_qe_df = pd.read_csv(
+            mr_results_path,
+            index_col=0,
+            converters={
+                "contexts": literal_eval,
+                "entity": literal_eval,
+            },  # required because if read in as strings, then compute_mr will fail)
+        )
         print("\tSuccessfully loaded cached MR results from disk.")
     except FileNotFoundError:
         print(
@@ -238,8 +249,21 @@ def main():
             val_df_contexts_per_qe = val_df_contexts_per_qe.drop(
                 columns=["sampled_mr", "sampled_answergroups", "sampled_outputs"]
             )
+            val_df_contexts_per_qe.to_csv(val_results_path)
         else:
             print("\t\tFailed to construct memorization ratio results from val_df_contexts_per_qe.")
+            mr_per_qe_df = dataset_df.copy()
+
+    # Sanity check that dataset_df matches val_df_contexts_per_qe and mr_per_qe_df
+    if mr_per_qe_df[dataset_df.columns].equals(dataset_df):
+        print("mr_per_qe_df matches dataset_df.")
+    else:
+        raise ValueError("mr_per_qe_df does not match dataset_df.")
+
+    if val_df_contexts_per_qe[dataset_df.columns].equals(dataset_df):
+        print("val_df_contexts_per_qe matches dataset_df.")
+    else:
+        raise ValueError("val_df_contexts_per_qe does not match dataset_df.")
 
     if (
         not os.path.exists(val_results_path)
