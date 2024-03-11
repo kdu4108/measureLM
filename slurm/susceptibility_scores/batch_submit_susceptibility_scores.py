@@ -11,7 +11,7 @@ with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [9, 10]
+seeds = [8, 9, 10]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -84,7 +84,7 @@ cap_per_type = False
 ablate = False
 deduplicate_entities = True
 uniform_contexts = True
-overwrite = False
+overwrite = True
 
 compute_mr = False
 batch_sz = 16

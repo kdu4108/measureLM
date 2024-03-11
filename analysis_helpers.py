@@ -10,8 +10,144 @@ import random
 # import torch
 import wandb
 
-from susceptibility_scores import construct_paths_and_dataset_kwargs
-from utils import load_artifact_from_wandb
+from utils import load_artifact_from_wandb, construct_paths_and_dataset_kwargs
+
+
+def add_val_df_to_wandb(
+    yago_qec: dict,
+    DATASET_NAME: str,
+    RAW_DATA_PATH: str,
+    SEED: int,
+    MODEL_ID: str,
+    LOAD_IN_8BIT: bool,
+    QUERY_ID: str,
+    MAX_CONTEXTS: int,
+    MAX_ENTITIES: int,
+    CAP_PER_TYPE: bool,
+    ABLATE_OUT_RELEVANT_CONTEXTS: bool,
+    DEDUPLICATE_ENTITIES: bool,
+    UNIFORM_CONTEXTS: bool,
+    ENTITY_SELECTION_FUNC_NAME: str,
+    ENTITY_TYPES: List[str],
+    QUERY_TYPES: List[str],
+    ANSWER_MAP: Dict[int, List[str]],
+    convert_cols=["contexts", "entity", "persuasion_scores", "persuasion_scores_kl", "relevant_context_inds"],
+    verbose=False,
+    overwrite_df=False,
+) -> str:
+    # Construct paths from run parameters and construct DATASET_KWARGS_IDENTIFIABLE
+    (
+        data_dir,
+        input_dir,
+        entities_path,
+        contexts_path,
+        queries_path,
+        answers_path,
+        val_data_path,
+        model_dir,
+        results_dir,
+        val_results_path,
+        mr_results_path,
+        data_id,
+        model_id,
+        DATASET_KWARGS_IDENTIFIABLE,
+    ) = construct_paths_and_dataset_kwargs(
+        DATASET_NAME=DATASET_NAME,
+        RAW_DATA_PATH=RAW_DATA_PATH,
+        SEED=SEED,
+        MODEL_ID=MODEL_ID,
+        LOAD_IN_8BIT=LOAD_IN_8BIT,
+        QUERY_ID=QUERY_ID,
+        MAX_CONTEXTS=MAX_CONTEXTS,
+        MAX_ENTITIES=MAX_ENTITIES,
+        CAP_PER_TYPE=CAP_PER_TYPE,
+        UNIFORM_CONTEXTS=UNIFORM_CONTEXTS,
+        DEDUPLICATE_ENTITIES=DEDUPLICATE_ENTITIES,
+        ENTITY_SELECTION_FUNC_NAME=ENTITY_SELECTION_FUNC_NAME,
+        ABLATE_OUT_RELEVANT_CONTEXTS=ABLATE_OUT_RELEVANT_CONTEXTS,
+        OVERWRITE=False,
+        ENTITY_TYPES=ENTITY_TYPES,
+        QUERY_TYPES=QUERY_TYPES,
+        ANSWER_MAP=ANSWER_MAP,
+    )
+    os.makedirs(results_dir, exist_ok=True)
+    print(f"Logging results to w&b run {wandb.run}.")
+    artifact_name = f"{data_id}-{SEED}-{model_id}".replace("/", ".")
+    artifact_name = hashlib.sha256(artifact_name.encode()).hexdigest()[:8]
+    artifact = wandb.Artifact(name=artifact_name, type="val_df_contexts_per_qe")
+    artifact.add_dir(local_path=results_dir)
+    wandb.run.log_artifact(artifact)
+    return artifact_name
+
+
+def load_val_df_from_wandb(
+    yago_qec: dict,
+    DATASET_NAME: str,
+    RAW_DATA_PATH: str,
+    SEED: int,
+    MODEL_ID: str,
+    LOAD_IN_8BIT: bool,
+    QUERY_ID: str,
+    MAX_CONTEXTS: int,
+    MAX_ENTITIES: int,
+    CAP_PER_TYPE: bool,
+    ABLATE_OUT_RELEVANT_CONTEXTS: bool,
+    DEDUPLICATE_ENTITIES: bool,
+    UNIFORM_CONTEXTS: bool,
+    ENTITY_SELECTION_FUNC_NAME: str,
+    ENTITY_TYPES: List[str],
+    QUERY_TYPES: List[str],
+    ANSWER_MAP: Dict[int, List[str]],
+    convert_cols=["contexts", "entity", "persuasion_scores", "persuasion_scores_kl", "relevant_context_inds"],
+    verbose=False,
+    overwrite_df=False,
+) -> str:
+    # Construct paths from run parameters and construct DATASET_KWARGS_IDENTIFIABLE
+    (
+        data_dir,
+        input_dir,
+        entities_path,
+        contexts_path,
+        queries_path,
+        answers_path,
+        val_data_path,
+        model_dir,
+        results_dir,
+        val_results_path,
+        mr_results_path,
+        data_id,
+        model_id,
+        DATASET_KWARGS_IDENTIFIABLE,
+    ) = construct_paths_and_dataset_kwargs(
+        DATASET_NAME=DATASET_NAME,
+        RAW_DATA_PATH=RAW_DATA_PATH,
+        SEED=SEED,
+        MODEL_ID=MODEL_ID,
+        LOAD_IN_8BIT=LOAD_IN_8BIT,
+        QUERY_ID=QUERY_ID,
+        MAX_CONTEXTS=MAX_CONTEXTS,
+        MAX_ENTITIES=MAX_ENTITIES,
+        CAP_PER_TYPE=CAP_PER_TYPE,
+        UNIFORM_CONTEXTS=UNIFORM_CONTEXTS,
+        DEDUPLICATE_ENTITIES=DEDUPLICATE_ENTITIES,
+        ENTITY_SELECTION_FUNC_NAME=ENTITY_SELECTION_FUNC_NAME,
+        ABLATE_OUT_RELEVANT_CONTEXTS=ABLATE_OUT_RELEVANT_CONTEXTS,
+        OVERWRITE=False,
+        ENTITY_TYPES=ENTITY_TYPES,
+        QUERY_TYPES=QUERY_TYPES,
+        ANSWER_MAP=ANSWER_MAP,
+    )
+    os.makedirs(results_dir, exist_ok=True)
+    print(f"Loading results from w&b run {wandb.run}.")
+
+    artifact_name = f"{data_id}-{SEED}-{model_id}".replace("/", ".")
+    artifact_name = hashlib.sha256(artifact_name.encode()).hexdigest()[:8]
+    if wandb.run is not None:
+        # TODO: this might result in bugs if we need to recompute.
+        # Download val_df_per_qe from wandb (if not already cached there)
+        artifact, files = load_artifact_from_wandb(artifact_name, save_dir=results_dir, verbose=verbose)
+
+    return files
 
 
 def construct_df_given_query_id(
@@ -32,7 +168,7 @@ def construct_df_given_query_id(
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
-    convert_cols=["contexts", "entity", "persuasion_scores", "relevant_context_inds"],
+    convert_cols=["contexts", "entity", "persuasion_scores", "persuasion_scores_kl", "relevant_context_inds"],
     verbose=False,
     overwrite_df=False,
 ) -> pd.DataFrame:
@@ -161,6 +297,7 @@ def construct_df_given_query_id(
             "answer",
             "contexts",
             "persuasion_scores",
+            "persuasion_scores_kl",
             "type",
             "susceptibility_score",
         ]

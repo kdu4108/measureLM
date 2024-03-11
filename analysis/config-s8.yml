@@ -1,0 +1,20 @@
+ABLATE_OUT_RELEVANT_CONTEXTS: false
+ANSWER_MAP: null
+BATCH_SZ: 16
+CAP_PER_TYPE: false
+DATASET_NAME: YagoECQ
+DEDUPLICATE_ENTITIES: true
+ENTITY_SELECTION_FUNC_NAME: top_entity_uri_degree
+ENTITY_TYPES:
+- entities
+- gpt_fake_entities
+LOAD_IN_8BIT: true
+MAX_CONTEXTS: 500
+MAX_ENTITIES: 100
+MODEL_ID: EleutherAI/pythia-6.9b-deduped
+QUERY_TYPES:
+- closed
+- open
+RAW_DATA_PATH: data/YagoECQ/yago_qec.json
+SEED: 8
+UNIFORM_CONTEXTS: true
