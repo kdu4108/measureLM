@@ -207,6 +207,7 @@ def main():
             converters={
                 "contexts": literal_eval,
                 "entity": literal_eval,
+                "answer": literal_eval,
             },  # required because if read in as strings, then estimate_cmi will fail
         )
         print("\tSuccessfully loaded cached sus score results from disk.")
@@ -222,6 +223,7 @@ def main():
             converters={
                 "contexts": literal_eval,
                 "entity": literal_eval,
+                "answer": literal_eval,
             },  # required because if read in as strings, then compute_mr will fail)
         )
         print("\tSuccessfully loaded cached MR results from disk.")

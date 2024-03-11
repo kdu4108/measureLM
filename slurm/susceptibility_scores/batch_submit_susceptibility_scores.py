@@ -28,7 +28,27 @@ else:
     ]
     max_contexts = [500]
     max_entities = [100]
-    query_ids = list(yago_qec.keys())
+    # query_ids = list(yago_qec.keys())
+    query_ids = [
+        "http://yago-knowledge.org/resource/studentsCount",
+        "http://schema.org/numberOfPages",
+        "http://yago-knowledge.org/resource/distanceFromEarth",
+        "http://schema.org/numberOfEmployees",
+        "http://schema.org/numberOfEpisodes",
+        "http://schema.org/numberOfSeasons",
+        "http://schema.org/humanDevelopmentIndex",
+        "http://schema.org/duns",
+        "http://schema.org/duration",
+        "http://schema.org/unemploymentRate",
+        "http://yago-knowledge.org/resource/radialVelocity",
+        "http://schema.org/populationNumber",
+        "http://yago-knowledge.org/resource/luminosity",
+        "http://yago-knowledge.org/resource/parallax",
+        "http://yago-knowledge.org/resource/length",
+        "http://schema.org/elevation",
+        "http://yago-knowledge.org/resource/sportNumber",
+        "http://yago-knowledge.org/resource/mass",
+    ]
     # query_ids = list(
     #     set(query_ids).difference(
     #         {
