@@ -74,7 +74,7 @@ def get_args():
     parser.add_argument(
         "-ET", "--ENTITY_TYPES", type=json.loads, default=["entities", "gpt_fake_entities"], help="Entity types to use"
     )
-    parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed"], help="Query types to use")
+    parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed", "open"], help="Query types to use")
     parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
     )
@@ -205,10 +205,10 @@ def main():
             val_results_path,
             index_col=0,
             converters={
-                "contexts": literal_eval,
-                "entity": literal_eval,
-                "answer": literal_eval,
-            },  # required because if read in as strings, then estimate_cmi will fail
+                "contexts": literal_eval,  # required because this is a list of strings and shouldn't be read in as a string
+                "entity": literal_eval,  # required because this is a tuple of strings and shouldn't be read in as a string
+                "answer": str,  # required because pd will automatically try to convert this column to float when it can (which is the case for number-answers, e.g. luminosity)
+            },
         )
         print("\tSuccessfully loaded cached sus score results from disk.")
     except FileNotFoundError:
@@ -221,10 +221,10 @@ def main():
             mr_results_path,
             index_col=0,
             converters={
-                "contexts": literal_eval,
-                "entity": literal_eval,
-                "answer": literal_eval,
-            },  # required because if read in as strings, then compute_mr will fail)
+                "contexts": literal_eval,  # required because this is a list of strings and shouldn't be read in as a string
+                "entity": literal_eval,  # required because this is a tuple of strings and shouldn't be read in as a string
+                "answer": str,  # required because pd will automatically try to convert this column to float when it can (which is the case for number-answers, e.g. luminosity)
+            },
         )
         print("\tSuccessfully loaded cached MR results from disk.")
     except FileNotFoundError:

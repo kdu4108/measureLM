@@ -204,6 +204,7 @@ class EntityContextQueryDataset(Dataset):
         answers_path: Optional[str] = None,
     ):
         try:
+            # TODO: fix bug, this try block is always being overwritten by the finally block
             if self.overwrite:
                 raise ValueError("User determined to overwrite existing datasets.")
             self.entities: List[Tuple[str]] = load_dataset_from_path(entities_path)
