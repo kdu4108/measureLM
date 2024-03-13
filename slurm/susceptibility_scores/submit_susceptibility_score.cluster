@@ -11,4 +11,4 @@ echo "Previewing script call:"
 echo "./$script $1 $2 $3 $4 $5 $6 $7 '$8' '$9' '${10}' ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19}"; # This assumes the list represented by $8 has NO SPACES!!
 # sbatch --time="02:00:00" -n $NUM_CPUS --gpus-per-node=gtx_1080_ti:1 -o $OUTFILE -e submit_pm_train.e --wrap="./$script"
 # sbatch --time="24:00:00" -n $NUM_CPUS --mem-per-cpu=16G -o $OUTFILE -e $ERRORFILE --wrap="./$script $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}"
-sbatch --account=es_cott --ntasks=1 --time=4:00:00 --mem-per-cpu=16G --tmp=64G --gpus=1 --gres=gpumem:24g --wrap="./$script $1 $2 $3 $4 $5 $6 $7 '$8' '$9' '${10}' ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19}" # use this for computing the entity score using GPU
+sbatch --account=es_cott --ntasks=1 --time=8:00:00 --mem-per-cpu=16G --tmp=64G --gpus=1 --gres=gpumem:24g --wrap="./$script $1 $2 $3 $4 $5 $6 $7 '$8' '$9' '${10}' ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19}" # use this for computing the entity score using GPU

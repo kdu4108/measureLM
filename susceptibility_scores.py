@@ -13,7 +13,7 @@ import torch
 import numpy as np
 import wandb
 
-from utils import construct_paths_and_dataset_kwargs
+from utils import construct_paths_and_dataset_kwargs, construct_artifact_name
 from measuring.estimate_probs import compute_memorization_ratio, estimate_cmi
 from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ, EntityContextQueryDataset
 from preprocessing.utils import format_query
@@ -353,7 +353,10 @@ def main():
         mr_per_qe_df.drop(columns=["mr_and_answers_and_outputs"], inplace=True)
         mr_per_qe_df.to_csv(mr_results_path)
     else:
-        print("MR already computed in `mr_results_path` cached on disk.")
+        if not COMPUTE_MR:
+            print("COMPUTE_MR is False, skipping computing MR.")
+        else:
+            print("MR already computed in `mr_results_path` cached on disk.")
         # val_df_contexts_per_qe = pd.read_csv(
         #     val_results_path,
         #     index_col=0,
@@ -370,8 +373,9 @@ def main():
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     if LOG_DATASETS:
         print(f"Logging results to w&b run {wandb.run}.")
-        artifact = wandb.Artifact(name=data_id, type="dataset")
-        artifact.add_dir(local_path=data_dir)
+        artifact_name = construct_artifact_name(data_id, SEED, model_id)
+        artifact = wandb.Artifact(name=artifact_name, type="val_df_contexts_per_qe")
+        artifact.add_dir(local_path=results_dir)
         run.log_artifact(artifact)
 
     wandb.finish()

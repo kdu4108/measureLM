@@ -9,6 +9,12 @@ import wandb
 from preprocessing.utils import extract_name_from_yago_uri
 
 
+def construct_artifact_name(data_id, SEED, model_id, prefix=""):
+    artifact_name = f"{data_id}-{SEED}-{model_id}".replace("/", ".")
+    artifact_name = prefix + hashlib.sha256(artifact_name.encode()).hexdigest()[:8]
+    return artifact_name
+
+
 def load_artifact_from_wandb(artifact_name: str, save_dir: str, verbose=True) -> Optional[str]:
     # Load artifact if it exists.
     # This will try to download the entire directory of the data_id,

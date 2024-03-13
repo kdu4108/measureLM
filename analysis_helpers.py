@@ -13,7 +13,7 @@ import statsmodels.api as sm
 # import torch
 import wandb
 
-from utils import load_artifact_from_wandb, construct_paths_and_dataset_kwargs
+from utils import load_artifact_from_wandb, construct_paths_and_dataset_kwargs, construct_artifact_name
 
 
 def add_val_df_to_wandb(
@@ -75,8 +75,7 @@ def add_val_df_to_wandb(
     )
     os.makedirs(results_dir, exist_ok=True)
     print(f"Logging results to w&b run {wandb.run}.")
-    artifact_name = f"{data_id}-{SEED}-{model_id}".replace("/", ".")
-    artifact_name = hashlib.sha256(artifact_name.encode()).hexdigest()[:8]
+    artifact_name = construct_artifact_name(data_id, SEED, model_id)
     artifact = wandb.Artifact(name=artifact_name, type="val_df_contexts_per_qe")
     artifact.add_dir(local_path=results_dir)
     wandb.run.log_artifact(artifact)
@@ -143,8 +142,7 @@ def load_val_df_from_wandb(
     os.makedirs(results_dir, exist_ok=True)
     print(f"Loading results from w&b run {wandb.run}.")
 
-    artifact_name = f"{data_id}-{SEED}-{model_id}".replace("/", ".")
-    artifact_name = hashlib.sha256(artifact_name.encode()).hexdigest()[:8]
+    artifact_name = construct_artifact_name(data_id, SEED, model_id)
     if wandb.run is not None:
         # TODO: this might result in bugs if we need to recompute.
         # Download val_df_per_qe from wandb (if not already cached there)
