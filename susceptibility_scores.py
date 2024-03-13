@@ -260,12 +260,23 @@ def main():
     if mr_per_qe_df[dataset_df.columns].equals(dataset_df):
         print("mr_per_qe_df matches dataset_df.")
     else:
-        raise ValueError("mr_per_qe_df does not match dataset_df.")
+        if OVERWRITE:
+            print("Overwriting mr_per_qe_df to be dataset_df.")
+            mr_per_qe_df = dataset_df
+        else:
+            raise ValueError("mr_per_qe_df does not match dataset_df.")
 
     if val_df_contexts_per_qe[dataset_df.columns].equals(dataset_df):
         print("val_df_contexts_per_qe matches dataset_df.")
     else:
-        raise ValueError("val_df_contexts_per_qe does not match dataset_df.")
+        print(val_df_contexts_per_qe[dataset_df.columns] == dataset_df)
+        print(val_df_contexts_per_qe[dataset_df.columns])
+        print(dataset_df)
+        if OVERWRITE:
+            print("Overwriting val_df_contexts_per_qe to be dataset_df.")
+            val_df_contexts_per_qe = dataset_df
+        else:
+            raise ValueError("val_df_contexts_per_qe does not match dataset_df.")
 
     if (
         not os.path.exists(val_results_path)
