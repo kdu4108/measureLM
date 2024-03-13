@@ -2,10 +2,13 @@ from ast import literal_eval
 from typing import List, Dict
 import os
 import hashlib
+import json
 
 import pandas as pd
 import numpy as np
 import random
+from scipy.stats import ttest_ind
+import statsmodels.api as sm
 
 # import torch
 import wandb
@@ -150,6 +153,74 @@ def load_val_df_from_wandb(
     return files
 
 
+def construct_mr_df_given_query_id(
+    yago_qec: dict,
+    DATASET_NAME: str,
+    RAW_DATA_PATH: str,
+    SEED: int,
+    MODEL_ID: str,
+    LOAD_IN_8BIT: bool,
+    QUERY_ID: str,
+    MAX_CONTEXTS: int,
+    MAX_ENTITIES: int,
+    CAP_PER_TYPE: bool,
+    ABLATE_OUT_RELEVANT_CONTEXTS: bool,
+    DEDUPLICATE_ENTITIES: bool,
+    UNIFORM_CONTEXTS: bool,
+    ENTITY_SELECTION_FUNC_NAME: str,
+    ENTITY_TYPES: List[str],
+    QUERY_TYPES: List[str],
+    ANSWER_MAP: Dict[int, List[str]],
+    convert_cols=["contexts", "entity", "sampled_answergroups"],
+    verbose=False,
+    overwrite_df=False,
+) -> pd.DataFrame:
+    # Construct paths from run parameters and construct DATASET_KWARGS_IDENTIFIABLE
+    (
+        data_dir,
+        input_dir,
+        entities_path,
+        contexts_path,
+        queries_path,
+        answers_path,
+        val_data_path,
+        model_dir,
+        results_dir,
+        val_results_path,
+        mr_results_path,
+        data_id,
+        model_id,
+        DATASET_KWARGS_IDENTIFIABLE,
+    ) = construct_paths_and_dataset_kwargs(
+        DATASET_NAME=DATASET_NAME,
+        RAW_DATA_PATH=RAW_DATA_PATH,
+        SEED=SEED,
+        MODEL_ID=MODEL_ID,
+        LOAD_IN_8BIT=LOAD_IN_8BIT,
+        QUERY_ID=QUERY_ID,
+        MAX_CONTEXTS=MAX_CONTEXTS,
+        MAX_ENTITIES=MAX_ENTITIES,
+        CAP_PER_TYPE=CAP_PER_TYPE,
+        UNIFORM_CONTEXTS=UNIFORM_CONTEXTS,
+        DEDUPLICATE_ENTITIES=DEDUPLICATE_ENTITIES,
+        ENTITY_SELECTION_FUNC_NAME=ENTITY_SELECTION_FUNC_NAME,
+        ABLATE_OUT_RELEVANT_CONTEXTS=ABLATE_OUT_RELEVANT_CONTEXTS,
+        OVERWRITE=False,
+        ENTITY_TYPES=ENTITY_TYPES,
+        QUERY_TYPES=QUERY_TYPES,
+        ANSWER_MAP=ANSWER_MAP,
+    )
+    try:
+        return pd.read_csv(
+            mr_results_path,
+            index_col=0,
+            converters={**{col: literal_eval for col in convert_cols}, **{"answer": str}},
+        )
+    except FileNotFoundError as e:
+        print(f"Unable to find file at {mr_results_path}, full error: {e}")
+        return None
+
+
 def construct_df_given_query_id(
     yago_qec: dict,
     DATASET_NAME: str,
@@ -168,7 +239,14 @@ def construct_df_given_query_id(
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
-    convert_cols=["contexts", "entity", "persuasion_scores", "persuasion_scores_kl", "relevant_context_inds"],
+    convert_cols={
+        "contexts",
+        "entity",
+        "persuasion_scores",
+        "persuasion_scores_kl",
+        "relevant_context_inds",
+        "sampled_answergroups",
+    },
     verbose=False,
     overwrite_df=False,
 ) -> pd.DataFrame:
@@ -222,18 +300,21 @@ def construct_df_given_query_id(
         print(f"Model dir: {model_dir}")
         print(f"Data id: {data_id}")
 
-    artifact_name = f"{data_id}-{SEED}-{model_id}-val_df_per_qe".replace("/", ".")
-    artifact_name = f"val_df_per_qe-{hashlib.sha256(artifact_name.encode()).hexdigest()[:8]}"
-    if wandb.run is not None and not os.path.exists(save_path):
-        # TODO: this might result in bugs if we need to recompute.
-        # Download val_df_per_qe from wandb (if not already cached there)
-        artifact, files = load_artifact_from_wandb(artifact_name, save_dir=analysis_dir, verbose=verbose)
+    # artifact_name = f"{data_id}-{SEED}-{model_id}-val_df_per_qe".replace("/", ".")
+    # artifact_name = f"val_df_per_qe-{hashlib.sha256(artifact_name.encode()).hexdigest()[:8]}"
+    # if wandb.run is not None and not os.path.exists(save_path):
+    #     # TODO: this might result in bugs if we need to recompute.
+    #     # Download val_df_per_qe from wandb (if not already cached there)
+    #     artifact, files = load_artifact_from_wandb(artifact_name, save_dir=analysis_dir, verbose=verbose)
 
     if not overwrite_df and os.path.exists(save_path):
         if verbose:
             print(f"Loading val_df_per_qe for {QUERY_ID} from cache.")
         # print(f"Loading val_df_per_qe for {QUERY_ID} from cache at {save_path}.")
-        val_df_per_qe = pd.read_csv(save_path, converters={col: literal_eval for col in convert_cols})
+        val_df_per_qe = pd.read_csv(save_path, converters={"answer": str})
+        for col in convert_cols:
+            if col in val_df_per_qe:
+                val_df_per_qe[col] = val_df_per_qe[col].apply(literal_eval)
     else:
         print(f"Computing val_df_per_qe for {QUERY_ID}.")
 
@@ -246,11 +327,36 @@ def construct_df_given_query_id(
             val_df_contexts_per_qe = pd.read_csv(
                 val_results_path,
                 index_col=0,
-                converters={col: literal_eval for col in convert_cols},
+                converters={"answer": str},  # Must convert answer first for number cases
+                # converters={**{col: literal_eval for col in convert_cols}, **{"answer": str}},
             )
         except FileNotFoundError as e:
             print(f"Unable to find file at {val_results_path}, full error: {e}")
             return None
+
+        try:
+            mr_df = pd.read_csv(
+                mr_results_path,
+                index_col=0,
+                converters={"answer": str},  # Must convert answer first for number cases
+                # converters={**{col: literal_eval for col in ["contexts", "entity", "sampled_answergroups"]}, **{"answer": str}},
+            )
+            val_df_contexts_per_qe = val_df_contexts_per_qe.merge(
+                mr_df,
+                on=["q_id", "query_form", "entity", "answer", "contexts"],
+            )
+            if len(mr_df) != len(val_df_contexts_per_qe):
+                print(
+                    "Warning: val_df_contexts_per_qe and mr_df have different lengths, meaning they did not fully match in all rows on the merge."
+                )
+        except FileNotFoundError as e:
+            print(f"Unable to find mr_results_path at {mr_results_path}, full error: {e}")
+            mr_df = None
+
+        for col in convert_cols:
+            if col in val_df_contexts_per_qe:
+                val_df_contexts_per_qe[col] = val_df_contexts_per_qe[col].apply(literal_eval)
+
         if verbose:
             print("val_df_contexts_per_qe info:")
             print(val_df_contexts_per_qe.info())
@@ -303,7 +409,6 @@ def construct_df_given_query_id(
         ]
         if "sampled_mr" in val_df_contexts_per_qe:
             cols += ["sampled_mr", "sampled_answergroups", "sampled_outputs"]
-            convert_cols += ["sampled_answergroups"]
 
         val_df_per_qe = val_df_contexts_per_qe.merge(
             entities_df_tidy,
@@ -332,13 +437,13 @@ def construct_df_given_query_id(
 
         val_df_per_qe.to_csv(save_path, index=False)
 
-        if wandb.run is not None:
-            artifact = wandb.Artifact(name=artifact_name, type="resultsdf")
-            artifact.add_file(local_path=save_path)
-            if verbose:
-                print(f"Logging artifact: {artifact.name}.")
-                # print(f"Logging artifact: {artifact.name} containing {save_path}")
-            wandb.run.log_artifact(artifact)
+        # if wandb.run is not None:
+        #     artifact = wandb.Artifact(name=artifact_name, type="resultsdf")
+        #     artifact.add_file(local_path=save_path)
+        #     if verbose:
+        #         print(f"Logging artifact: {artifact.name}.")
+        #         # print(f"Logging artifact: {artifact.name} containing {save_path}")
+        #     wandb.run.log_artifact(artifact)
 
     return val_df_per_qe
 
@@ -381,3 +486,254 @@ def percent_ents_passing_pscore_permutation_test(val_df_per_qe, query_type="clos
             ]
         ).mean(),
     )
+
+
+def ttest(
+    df,
+    group1="entities",
+    group2="fake_entities",
+    score_col="susceptibility_score",
+    permutations=None,
+):
+    sus_scores_real = df[df["type"] == group1][score_col]
+    sus_scores_fake = df[df["type"] == group2][score_col]
+    ttest_res = ttest_ind(sus_scores_real, sus_scores_fake, alternative="less", permutations=permutations)
+    t_stat, p_value = ttest_res.statistic, ttest_res.pvalue
+    # print(t_stat, p_value)
+    cohen_d = t_stat * np.sqrt(
+        (len(sus_scores_real) + len(sus_scores_fake)) / (len(sus_scores_real) * len(sus_scores_fake))
+    )
+    cohen_d2 = (np.mean(sus_scores_real) - np.mean(sus_scores_fake)) / np.sqrt(
+        (
+            np.var(sus_scores_real, ddof=1) * (len(sus_scores_real) - 1)
+            + np.var(sus_scores_fake, ddof=1) * (len(sus_scores_fake) - 1)
+        )
+        / (len(sus_scores_real) + len(sus_scores_fake) - 2)
+    )
+    assert np.isclose(cohen_d, cohen_d2)
+    # effect_size,
+    return {
+        "effect_size": cohen_d,
+        "p_value": p_value,
+        "n": len(sus_scores_fake) + len(sus_scores_real),
+    }
+
+
+def compute_ttest_scores_dfs(
+    qid_to_score_df: Dict[str, pd.DataFrame],
+    group1: str,
+    group2: str,
+    score_col: str,
+    permutations=None,
+):
+    ttest_scores_open = [
+        {
+            "query": k,
+            **ttest(
+                v[v["query_type"] == "open"],
+                group1=group1,
+                group2=group2,
+                score_col=score_col,
+                permutations=permutations,
+            ),
+        }
+        for k, v in qid_to_score_df.items()
+    ]
+    ttest_scores_closed = [
+        {
+            "query": k,
+            **ttest(
+                v[v["query_type"] == "closed"],
+                group1=group1,
+                group2=group2,
+                score_col=score_col,
+                permutations=permutations,
+            ),
+        }
+        for k, v in qid_to_score_df.items()
+    ]
+    ttest_res_open_df = pd.DataFrame(ttest_scores_open).sort_values(by="p_value").reset_index(drop=True)
+    ttest_res_open_df["bh_adj_p_value"] = sm.stats.multipletests(
+        pvals=ttest_res_open_df["p_value"], alpha=0.05, method="fdr_bh"
+    )[1]
+    ttest_res_closed_df = pd.DataFrame(ttest_scores_closed).sort_values(by="p_value").reset_index(drop=True)
+    ttest_res_closed_df["bh_adj_p_value"] = sm.stats.multipletests(
+        pvals=ttest_res_closed_df["p_value"], alpha=0.05, method="fdr_bh"
+    )[1]
+
+    return ttest_res_open_df, ttest_res_closed_df
+
+
+def count_open_closed_sig_group_match(ttest_res_open_df, ttest_res_closed_df, upper_p_bound=0.95, lower_p_bound=0.05):
+    # Identify how much the open and closed queries share the same significant groups (p<0.05, in between 0.05/0.95, and p>0.95)
+    open_sig_less = ttest_res_open_df[ttest_res_open_df["p_value"] < lower_p_bound]["query"]
+    open_sig_not = ttest_res_open_df[
+        (lower_p_bound <= ttest_res_open_df["p_value"]) & (ttest_res_open_df["p_value"] < upper_p_bound)
+    ]["query"]
+    open_sig_more = ttest_res_open_df[ttest_res_open_df["p_value"] >= upper_p_bound]["query"]
+    open_query_to_sig_cat = {
+        query: sig_cat
+        for sig_cat, query in [("less", q) for q in open_sig_less]
+        + [("not", q) for q in open_sig_not]
+        + [("more", q) for q in open_sig_more]
+    }
+
+    closed_sig_less = ttest_res_closed_df[ttest_res_closed_df["p_value"] < lower_p_bound]["query"]
+    closed_sig_not = ttest_res_closed_df[
+        (lower_p_bound <= ttest_res_closed_df["p_value"]) & (ttest_res_closed_df["p_value"] < upper_p_bound)
+    ]["query"]
+    closed_sig_more = ttest_res_closed_df[ttest_res_closed_df["p_value"] >= upper_p_bound]["query"]
+    closed_query_to_sig_cat = {
+        query: sig_cat
+        for sig_cat, query in [("less", q) for q in closed_sig_less]
+        + [("not", q) for q in closed_sig_not]
+        + [("more", q) for q in closed_sig_more]
+    }
+
+    open_vs_closed_sig_df = pd.DataFrame(
+        [
+            (query, open_query_to_sig_cat[query], closed_query_to_sig_cat[query])
+            for query in ttest_res_open_df["query"].unique()
+        ],
+        columns=["query", "open", "closed"],
+    )
+    return open_vs_closed_sig_df[open_vs_closed_sig_df["open"] == open_vs_closed_sig_df["closed"]]
+
+
+def count_num_significant_queries(
+    df,
+    col_name="p_value",
+    alpha=0.05,
+    alternative="two-sided",
+):
+    if alternative == "two-sided":
+        ranges = {
+            (0, alpha / 2): "less",
+            (alpha / 2, 1 - alpha / 2): "insignificant",
+            (1 - alpha / 2, 1): "more",
+        }
+    elif alternative == "less":
+        ranges = {
+            (0, alpha): "less",
+            (alpha, 1): "insignificant",
+        }
+    elif alternative == "greater":
+        ranges = {
+            (0, alpha): "insignificant",
+            (alpha, 1): "more",
+        }
+    else:
+        raise ValueError("alternative must be 'two-sided', 'less', or 'greater'")
+
+    # Initialize counters for each range for both Open and Closed p-values
+    count = dict()  # {range_val: 0 for range_val in ranges.keys()}
+    prop = dict()  # {range_val: 0 for range_val in ranges.keys()}
+
+    # Count rows for Open p-values
+    for range_val, cat_name in ranges.items():
+        count[cat_name] = df[(df[col_name] > range_val[0]) & (df[col_name] <= range_val[1])].shape[0]
+        prop[cat_name] = count[cat_name] / len(df)
+
+    return {"count": count, "proportion": prop}
+
+
+def save_ttest_df_to_json(
+    ttest_res_open_df,
+    ttest_res_closed_df,
+    qid_to_val_df_per_qe,
+    analysis_dir: str,
+    filename: str = "qid_to_sus_ttest_res_and_entities.json",
+):
+    # Generate map from qid to t-test results and entities for analyzing why some queries are less significant
+    qid_to_ttest_res_and_entities = {
+        qid: {
+            "closed": {
+                "p_value": ttest_res_closed_df[ttest_res_closed_df["query"] == qid]["p_value"].item(),
+                "effect_size": ttest_res_closed_df[ttest_res_closed_df["query"] == qid]["effect_size"].item(),
+            },
+            "open": {
+                "p_value": ttest_res_open_df[ttest_res_open_df["query"] == qid]["p_value"].item(),
+                "effect_size": ttest_res_open_df[ttest_res_open_df["query"] == qid]["effect_size"].item(),
+            },
+            "entities": [x[0] for x in df[df["type"] == "entities"]["entity"].tolist()],
+        }
+        for qid, df in qid_to_val_df_per_qe.items()
+    }
+    path = os.path.join(analysis_dir, filename)
+    print(path)
+    with open(path, "w", encoding="utf-8") as fp:
+        json.dump(qid_to_ttest_res_and_entities, fp, ensure_ascii=False, indent=4)
+
+
+def combine_open_and_closed_dfs(ttest_res_open_df, ttest_res_closed_df):
+    ttest_res_open_df["Query"] = ttest_res_open_df["query"].apply(
+        lambda x: ("reverse-" if "reverse" in x else "") + x.split("/")[-1]
+    )
+    ttest_res_closed_df["Query"] = ttest_res_closed_df["query"].apply(
+        lambda x: ("reverse-" if "reverse" in x else "") + x.split("/")[-1]
+    )
+    ttest_res_open_df = ttest_res_open_df.set_index("Query")
+    ttest_res_closed_df = ttest_res_closed_df.set_index("Query")
+
+    ttest_res_open_df["Cohen's $d$"] = ttest_res_open_df["effect_size"]
+    ttest_res_closed_df["Cohen's $d$"] = ttest_res_closed_df["effect_size"]
+    ttest_res_open_df["$p$"] = ttest_res_open_df["p_value"]
+    ttest_res_closed_df["$p$"] = ttest_res_closed_df["p_value"]
+
+    test_results_by_qid = pd.concat(
+        [
+            ttest_res_open_df.sort_values("Query")[["Cohen's $d$", "$p$"]],
+            ttest_res_closed_df.sort_values("Query")[["Cohen's $d$", "$p$"]],
+        ],
+        keys=["Open", "Closed"],
+        axis=1,
+    )
+
+    return test_results_by_qid
+
+
+def write_to_latex_test_results_by_qid(
+    test_results_by_qid: pd.DataFrame,
+    analysis_dir: str,
+    filename: str,
+):
+    with open(os.path.join(analysis_dir, filename), "w") as outfile:
+        latex_table = test_results_by_qid.to_latex(
+            index=True,
+            longtable=False,
+            # caption="For most queries, persuasion scores are significantly higher for relevant contexts than irrelevant contexts (when averaged across entities).",
+            # label="tab:p_score_test_results_by_qid",
+            column_format="lrrrr",
+            float_format="{:0.2f}".format,
+            header=True,
+            # bold_rows=True,
+            multicolumn=True,
+            multicolumn_format="c",
+        )
+        print(latex_table, file=outfile)
+
+    return latex_table
+
+
+def write_to_latex_test_sus_and_per_results_by_qid(
+    test_results_by_qid: pd.DataFrame,
+    analysis_dir: str,
+    filename: str,
+):
+    # note: will still need to manually add cmidrules to make it look prettier
+    with open(os.path.join(analysis_dir, filename), "w") as outfile:
+        latex_table = test_results_by_qid.to_latex(
+            index=True,
+            longtable=False,
+            # caption="For most queries, persuasion scores are significantly higher for relevant contexts than irrelevant contexts (when averaged across entities).",
+            # label="tab:p_score_test_results_by_qid",
+            column_format="lrrrrrrrr",
+            float_format="{:0.2f}".format,
+            header=True,
+            # bold_rows=True,
+            multicolumn=True,
+            multicolumn_format="c",
+        )
+        print(latex_table, file=outfile)
+
+    return latex_table
