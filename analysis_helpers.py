@@ -4,6 +4,7 @@ import os
 import hashlib
 import json
 
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import random
@@ -34,9 +35,6 @@ def add_val_df_to_wandb(
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
-    convert_cols=["contexts", "entity", "persuasion_scores", "persuasion_scores_kl", "relevant_context_inds"],
-    verbose=False,
-    overwrite_df=False,
 ) -> str:
     # Construct paths from run parameters and construct DATASET_KWARGS_IDENTIFIABLE
     (
@@ -491,30 +489,38 @@ def ttest(
     group1="entities",
     group2="fake_entities",
     score_col="susceptibility_score",
+    type_col="type",
     permutations=None,
 ):
-    sus_scores_real = df[df["type"] == group1][score_col]
-    sus_scores_fake = df[df["type"] == group2][score_col]
-    ttest_res = ttest_ind(sus_scores_real, sus_scores_fake, alternative="less", permutations=permutations)
-    t_stat, p_value = ttest_res.statistic, ttest_res.pvalue
-    # print(t_stat, p_value)
-    cohen_d = t_stat * np.sqrt(
-        (len(sus_scores_real) + len(sus_scores_fake)) / (len(sus_scores_real) * len(sus_scores_fake))
-    )
-    cohen_d2 = (np.mean(sus_scores_real) - np.mean(sus_scores_fake)) / np.sqrt(
-        (
-            np.var(sus_scores_real, ddof=1) * (len(sus_scores_real) - 1)
-            + np.var(sus_scores_fake, ddof=1) * (len(sus_scores_fake) - 1)
+    try:
+        sus_scores_real = df[df[type_col] == group1][score_col]
+        sus_scores_fake = df[df[type_col] == group2][score_col]
+        ttest_res = ttest_ind(sus_scores_real, sus_scores_fake, alternative="less", permutations=permutations)
+        t_stat, p_value = ttest_res.statistic, ttest_res.pvalue
+        # print(t_stat, p_value)
+        cohen_d = t_stat * np.sqrt(
+            (len(sus_scores_real) + len(sus_scores_fake)) / (len(sus_scores_real) * len(sus_scores_fake))
         )
-        / (len(sus_scores_real) + len(sus_scores_fake) - 2)
-    )
-    assert np.isclose(cohen_d, cohen_d2)
-    # effect_size,
-    return {
-        "effect_size": cohen_d,
-        "p_value": p_value,
-        "n": len(sus_scores_fake) + len(sus_scores_real),
-    }
+        cohen_d2 = (np.mean(sus_scores_real) - np.mean(sus_scores_fake)) / np.sqrt(
+            (
+                np.var(sus_scores_real, ddof=1) * (len(sus_scores_real) - 1)
+                + np.var(sus_scores_fake, ddof=1) * (len(sus_scores_fake) - 1)
+            )
+            / (len(sus_scores_real) + len(sus_scores_fake) - 2)
+        )
+        assert np.isclose(cohen_d, cohen_d2)
+        # effect_size,
+        return {
+            "effect_size": cohen_d,
+            "p_value": p_value,
+            "n": len(sus_scores_fake) + len(sus_scores_real),
+        }
+    except ZeroDivisionError:
+        return {
+            "effect_size": None,
+            "p_value": None,
+            "n": len(sus_scores_fake) + len(sus_scores_real),
+        }
 
 
 def compute_ttest_scores_dfs(
@@ -522,6 +528,7 @@ def compute_ttest_scores_dfs(
     group1: str,
     group2: str,
     score_col: str,
+    type_col: str = "type",
     permutations=None,
 ):
     ttest_scores_open = [
@@ -532,6 +539,7 @@ def compute_ttest_scores_dfs(
                 group1=group1,
                 group2=group2,
                 score_col=score_col,
+                type_col=type_col,
                 permutations=permutations,
             ),
         }
@@ -545,16 +553,19 @@ def compute_ttest_scores_dfs(
                 group1=group1,
                 group2=group2,
                 score_col=score_col,
+                type_col=type_col,
                 permutations=permutations,
             ),
         }
-        for k, v in qid_to_score_df.items()
+        for k, v in tqdm(qid_to_score_df.items())
     ]
     ttest_res_open_df = pd.DataFrame(ttest_scores_open).sort_values(by="p_value").reset_index(drop=True)
+    ttest_res_open_df = ttest_res_open_df[ttest_res_open_df["p_value"].notna()]
     ttest_res_open_df["bh_adj_p_value"] = sm.stats.multipletests(
         pvals=ttest_res_open_df["p_value"], alpha=0.05, method="fdr_bh"
     )[1]
     ttest_res_closed_df = pd.DataFrame(ttest_scores_closed).sort_values(by="p_value").reset_index(drop=True)
+    ttest_res_closed_df = ttest_res_closed_df[ttest_res_closed_df["p_value"].notna()]
     ttest_res_closed_df["bh_adj_p_value"] = sm.stats.multipletests(
         pvals=ttest_res_closed_df["p_value"], alpha=0.05, method="fdr_bh"
     )[1]
@@ -564,6 +575,8 @@ def compute_ttest_scores_dfs(
 
 def count_open_closed_sig_group_match(ttest_res_open_df, ttest_res_closed_df, upper_p_bound=0.95, lower_p_bound=0.05):
     # Identify how much the open and closed queries share the same significant groups (p<0.05, in between 0.05/0.95, and p>0.95)
+    ttest_res_open_df = ttest_res_open_df[ttest_res_open_df["p_value"].notna()]
+    ttest_res_closed_df = ttest_res_closed_df[ttest_res_closed_df["p_value"].notna()]
     open_sig_less = ttest_res_open_df[ttest_res_open_df["p_value"] < lower_p_bound]["query"]
     open_sig_not = ttest_res_open_df[
         (lower_p_bound <= ttest_res_open_df["p_value"]) & (ttest_res_open_df["p_value"] < upper_p_bound)
@@ -604,6 +617,7 @@ def count_num_significant_queries(
     alpha=0.05,
     alternative="two-sided",
 ):
+    df = df[df[col_name].notna()]
     if alternative == "two-sided":
         ranges = {
             (0, alpha / 2): "less",
@@ -629,7 +643,10 @@ def count_num_significant_queries(
 
     # Count rows for Open p-values
     for range_val, cat_name in ranges.items():
-        count[cat_name] = df[(df[col_name] > range_val[0]) & (df[col_name] <= range_val[1])].shape[0]
+        count[cat_name] = df[
+            (df[col_name] > range_val[0] if range_val[0] > 0 else df[col_name] >= range_val[0])
+            & (df[col_name] <= range_val[1])
+        ].shape[0]
         prop[cat_name] = count[cat_name] / len(df)
 
     return {"count": count, "proportion": prop}

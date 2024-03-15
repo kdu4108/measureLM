@@ -11,7 +11,7 @@ with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [8]
+seeds = [8, 9, 10]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -30,25 +30,34 @@ else:
     max_entities = [100]
     # query_ids = list(yago_qec.keys())
     query_ids = [
-        "http://yago-knowledge.org/resource/studentsCount",
-        "http://schema.org/numberOfPages",
-        "http://schema.org/numberOfEmployees",
-        "http://schema.org/numberOfEpisodes",
-        "http://schema.org/numberOfSeasons",
-        "http://schema.org/humanDevelopmentIndex",
-        "http://schema.org/duration",
-        "http://schema.org/populationNumber",
-        "http://yago-knowledge.org/resource/sportNumber",
-        # "http://yago-knowledge.org/resource/distanceFromEarth",
-        # "http://schema.org/duns",
-        # "http://schema.org/unemploymentRate",
-        # "http://yago-knowledge.org/resource/radialVelocity",
-        # "http://yago-knowledge.org/resource/luminosity",
-        # "http://yago-knowledge.org/resource/parallax",
-        # "http://yago-knowledge.org/resource/length",
-        # "http://schema.org/elevation",
-        # "http://yago-knowledge.org/resource/mass",
+        "reverse-http://schema.org/editor",
+        "http://schema.org/address",
+        "http://schema.org/motto",
     ]
+    # query_ids = [
+    #      # 'http://schema.org/lyricist',
+    #      # 'http://schema.org/manufacturer',
+    #      # 'http://schema.org/musicBy',
+    #      # 'http://schema.org/neighbors',
+    #     # "http://yago-knowledge.org/resource/studentsCount",
+    #     # "http://schema.org/numberOfPages",
+    #     # "http://schema.org/numberOfEmployees",
+    #     # "http://schema.org/numberOfEpisodes",
+    #     # "http://schema.org/numberOfSeasons",
+    #     # "http://schema.org/humanDevelopmentIndex",
+    #     # "http://schema.org/duration",
+    #     # "http://schema.org/populationNumber",
+    #     # "http://yago-knowledge.org/resource/sportNumber",
+    #     # "http://yago-knowledge.org/resource/distanceFromEarth",
+    #     # "http://schema.org/duns",
+    #     # "http://schema.org/unemploymentRate",
+    #     # "http://yago-knowledge.org/resource/radialVelocity",
+    #     # "http://yago-knowledge.org/resource/luminosity",
+    #     # "http://yago-knowledge.org/resource/parallax",
+    #     # "http://yago-knowledge.org/resource/length",
+    #     # "http://schema.org/elevation",
+    #     # "http://yago-knowledge.org/resource/mass",
+    # ]
     # query_ids = list(
     #     set(query_ids).difference(
     #         {
@@ -106,8 +115,8 @@ deduplicate_entities = True
 uniform_contexts = True
 overwrite = False
 
-compute_mr = True
-batch_sz = 16
+compute_mr = False
+batch_sz = 8
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:

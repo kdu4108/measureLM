@@ -1,6 +1,5 @@
 from typing import Callable, List, Dict, Optional, Set, Tuple
 from collections import Counter
-from enum import Enum
 import math
 import numpy as np
 import re
@@ -10,20 +9,13 @@ import scipy.stats as sst
 from transformers import GPTNeoXForCausalLM, AutoTokenizer
 
 from preprocessing.utils import format_query
+from measuring.utils import AnswerGroup
 
 # 1. Approximate x ∈ Σ∗ with a set of contexts from a dataset
 # 2. Approximate p(y|x, q[e]) with monte carlo samples of y given x and q[e].
 # 3. Approximate p(y|q[e]) with monte carlo samples of x.
 # 4. Approximate p(x) with samples from a corpus (empirical distribution), but meaning/interpretation is complicated.
 # Run a model on each of these sentences and get a score
-
-
-class AnswerGroup(Enum):
-    """Does the model answer agree with the original knowledge, context knowledge, or other?"""
-
-    ORIGINAL = 0
-    CONTEXT = 1
-    OTHER = 2
 
 
 def create_position_ids_from_input_ids(input_ids, padding_idx):
