@@ -758,7 +758,7 @@ class YagoECQ(EntityContextQueryDataset):
         self.uniform_contexts = uniform_contexts
         self.deduplicate_entities = deduplicate_entities
         self.entity_selection_func = getattr(sys.modules[__name__], entity_selection_func_name)
-        self.context_templates = self._extract_context_templates()
+        self.context_templates: Dict[str, str] = self._extract_context_templates()
         self.load_or_build_entities_contexts_and_queries(
             entities_path=entities_path,
             queries_path=queries_path,
@@ -769,7 +769,7 @@ class YagoECQ(EntityContextQueryDataset):
 
     def _extract_context_templates(self) -> List[str]:
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
-        return [yago_qec["context_templates"][ct] for ct in self.context_types]
+        return {ct: yago_qec["context_templates"][ct] for ct in self.context_types}
 
     def _read_entities(self, yago_qec: dict) -> List[str]:
         """Helper to read the eligible entities from yago_qec"""
@@ -917,7 +917,7 @@ class YagoECQ(EntityContextQueryDataset):
                 contexts = (
                     pd.DataFrame(context_per_entity_per_answer, columns=["entity", "answer", "context", "context_type"])
                     .groupby("entity")
-                    .sample(n=self.max_contexts // len(self.entities) // len(self.context_types))["context"]
+                    .sample(n=self.max_contexts // len(self.entities))["context"]
                     .tolist()
                 )
             else:

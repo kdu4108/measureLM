@@ -105,7 +105,7 @@ entity_types = json.dumps(
 query_types = json.dumps(
     ["closed", "open"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
-
+context_types = json.dumps(["assertive", "base", "negation"], separators=(",", ":"))
 answer_map = dict()
 # answer_map = {0: [" No", " no", " NO", "No", "no", "NO"], 1: [" Yes", " yes", " YES", "Yes", "yes", "YES"]}
 
@@ -176,6 +176,8 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{entity_types}",
                                         "-QT",
                                         f"{query_types}",
+                                        "-CT",
+                                        f"{context_types}",
                                         "-AM",
                                         f"{answer_map_in_tokens}",
                                         "-ES",
@@ -205,6 +207,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{me}",
                                         f"{entity_types}",
                                         f"{query_types}",
+                                        f"{context_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
                                         f"{batch_sz}",
