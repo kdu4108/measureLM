@@ -76,6 +76,9 @@ def get_args():
     )
     parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed", "open"], help="Query types to use")
     parser.add_argument(
+        "-CT", "--CONTEXT_TYPES", type=json.loads, default=["base", "assertive", "negation"], help="Query types to use"
+    )
+    parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
     )
     parser.add_argument(
@@ -112,6 +115,7 @@ def main():
     OVERWRITE = args.OVERWRITE
     ENTITY_TYPES = args.ENTITY_TYPES
     QUERY_TYPES = args.QUERY_TYPES
+    CONTEXT_TYPES = args.CONTEXT_TYPES
     ANSWER_MAP = {int(k): v for k, v in args.ANSWER_MAP.items()} if args.ANSWER_MAP else None
     COMPUTE_MR = args.COMPUTE_MR
     COMPUTE_P_SCORE_KL = True
@@ -163,6 +167,7 @@ def main():
         OVERWRITE=OVERWRITE,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
+        CONTEXT_TYPES=CONTEXT_TYPES,
         ANSWER_MAP=ANSWER_MAP,
         verbose=True,
     )

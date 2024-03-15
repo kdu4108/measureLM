@@ -697,6 +697,7 @@ class YagoECQ(EntityContextQueryDataset):
         query_id: str,
         query_types: List[str] = ["closed"],
         entity_types: List[str] = ["entities"],
+        context_types: List[str] = ["base"],
         entities_path: Optional[str] = None,
         queries_path: Optional[str] = None,
         contexts_path: Optional[str] = None,
@@ -745,6 +746,13 @@ class YagoECQ(EntityContextQueryDataset):
         if not set(self.entity_types).issubset(valid_entity_types):
             raise ValueError(f"entity_types must be subset of {valid_entity_types}, instead received {entity_types}.")
 
+        self.context_types = context_types
+        valid_context_types = {"base", "assertive", "super_assertive", "ignore_prior", "negation", "believe_me"}
+        if not set(self.context_types).issubset(valid_context_types):
+            raise ValueError(
+                f"context_types must be subset of {valid_context_types}, instead received {context_types}."
+            )
+
         self.cap_per_type = cap_per_type
         self.ablate_out_relevant_contexts = ablate_out_relevant_contexts
         self.uniform_contexts = uniform_contexts
@@ -761,7 +769,7 @@ class YagoECQ(EntityContextQueryDataset):
 
     def _extract_context_templates(self) -> List[str]:
         yago_qec: dict = load_dataset_from_path(self.raw_data_path)[self.query_id]
-        return yago_qec["context_templates"]
+        return [yago_qec["context_templates"][ct] for ct in self.context_types]
 
     def _read_entities(self, yago_qec: dict) -> List[str]:
         """Helper to read the eligible entities from yago_qec"""
@@ -898,18 +906,18 @@ class YagoECQ(EntityContextQueryDataset):
                 #       OR if you're keeping relevant contexts, then include only countries in self.entities.
                 # self.entities is a list of single-element tuples
                 for answer in answers:
-                    for context_template in self.context_templates:
+                    for ct, context_template in self.context_templates.items():
                         context_per_entity_per_answer.append(
-                            (entity, answer, context_template.format(entity=entity, answer=answer))
+                            (entity, answer, context_template.format(entity=entity, answer=answer), ct)
                         )
 
-        contexts: List[str] = [c for _, _, c in context_per_entity_per_answer]
+        contexts: List[str] = [c for _, _, c, _ in context_per_entity_per_answer]
         if self.max_contexts is not None:
             if self.uniform_contexts:
                 contexts = (
-                    pd.DataFrame(context_per_entity_per_answer, columns=["entity", "answer", "context"])
+                    pd.DataFrame(context_per_entity_per_answer, columns=["entity", "answer", "context", "context_type"])
                     .groupby("entity")
-                    .sample(n=self.max_contexts // len(self.entities))["context"]
+                    .sample(n=self.max_contexts // len(self.entities) // len(self.context_types))["context"]
                     .tolist()
                 )
             else:

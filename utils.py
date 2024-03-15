@@ -51,6 +51,7 @@ def construct_paths_and_dataset_kwargs(
     OVERWRITE: bool,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
+    CONTEXT_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
     verbose=False,
 ):
@@ -69,7 +70,13 @@ def construct_paths_and_dataset_kwargs(
         SUBNAME = f"{extract_name_from_yago_uri(QUERY_ID)[0]}_{extract_name_from_yago_uri(QUERY_ID)[1]}"  # TODO: probably need to fix this
         DATASET_KWARGS_IDENTIFIABLE = {
             **DATASET_KWARGS_IDENTIFIABLE,
-            **{"query_id": QUERY_ID, "subname": SUBNAME, "entity_types": ENTITY_TYPES, "query_types": QUERY_TYPES},
+            **{
+                "query_id": QUERY_ID,
+                "subname": SUBNAME,
+                "entity_types": ENTITY_TYPES,
+                "query_types": QUERY_TYPES,
+                "context_types": CONTEXT_TYPES,
+            },
         }
 
     # Paths
@@ -118,6 +125,12 @@ def construct_paths_and_dataset_kwargs(
     data_id += (
         "-QT_" + "_".join(DATASET_KWARGS_IDENTIFIABLE["query_types"])
         if "query_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["query_types"]
+        else ""
+    )
+
+    data_id += (
+        "-CT_" + "_".join(sorted(DATASET_KWARGS_IDENTIFIABLE["context_types"]))
+        if "context_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["context_types"]
         else ""
     )
 

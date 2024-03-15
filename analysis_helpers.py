@@ -34,6 +34,7 @@ def add_val_df_to_wandb(
     ENTITY_SELECTION_FUNC_NAME: str,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
+    CONTEXT_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
 ) -> str:
     # Construct paths from run parameters and construct DATASET_KWARGS_IDENTIFIABLE
@@ -69,6 +70,7 @@ def add_val_df_to_wandb(
         OVERWRITE=False,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
+        CONTEXT_TYPES=CONTEXT_TYPES,
         ANSWER_MAP=ANSWER_MAP,
     )
     os.makedirs(results_dir, exist_ok=True)
@@ -97,6 +99,7 @@ def load_val_df_from_wandb(
     ENTITY_SELECTION_FUNC_NAME: str,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
+    CONTEXT_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
     convert_cols=["contexts", "entity", "persuasion_scores", "persuasion_scores_kl", "relevant_context_inds"],
     verbose=False,
@@ -135,6 +138,7 @@ def load_val_df_from_wandb(
         OVERWRITE=False,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
+        CONTEXT_TYPES=CONTEXT_TYPES,
         ANSWER_MAP=ANSWER_MAP,
     )
     os.makedirs(results_dir, exist_ok=True)
@@ -166,6 +170,7 @@ def construct_mr_df_given_query_id(
     ENTITY_SELECTION_FUNC_NAME: str,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
+    CONTEXT_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
     convert_cols=["contexts", "entity", "sampled_answergroups"],
     verbose=False,
@@ -204,6 +209,7 @@ def construct_mr_df_given_query_id(
         OVERWRITE=False,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
+        CONTEXT_TYPES=CONTEXT_TYPES,
         ANSWER_MAP=ANSWER_MAP,
     )
     try:
@@ -234,6 +240,7 @@ def construct_df_given_query_id(
     ENTITY_SELECTION_FUNC_NAME: str,
     ENTITY_TYPES: List[str],
     QUERY_TYPES: List[str],
+    CONTEXT_TYPES: List[str],
     ANSWER_MAP: Dict[int, List[str]],
     convert_cols={
         "contexts",
@@ -279,6 +286,7 @@ def construct_df_given_query_id(
         OVERWRITE=False,
         ENTITY_TYPES=ENTITY_TYPES,
         QUERY_TYPES=QUERY_TYPES,
+        CONTEXT_TYPES=CONTEXT_TYPES,
         ANSWER_MAP=ANSWER_MAP,
     )
     # Analysis dir
