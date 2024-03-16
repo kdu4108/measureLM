@@ -916,8 +916,8 @@ class YagoECQ(EntityContextQueryDataset):
             if self.uniform_contexts:
                 contexts = (
                     pd.DataFrame(context_per_entity_per_answer, columns=["entity", "answer", "context", "context_type"])
-                    .groupby("entity")
-                    .sample(n=self.max_contexts // len(self.entities))["context"]
+                    .groupby(["entity", "context_type"])
+                    .sample(n=self.max_contexts // len(self.entities) // len(self.context_types))["context"]
                     .tolist()
                 )
             else:
