@@ -130,7 +130,11 @@ def construct_paths_and_dataset_kwargs(
 
     data_id += (
         "-CT_" + "_".join(sorted(DATASET_KWARGS_IDENTIFIABLE["context_types"]))
-        if "context_types" in DATASET_KWARGS_IDENTIFIABLE and DATASET_KWARGS_IDENTIFIABLE["context_types"]
+        if (
+            "context_types" in DATASET_KWARGS_IDENTIFIABLE
+            and DATASET_KWARGS_IDENTIFIABLE["context_types"]
+            and DATASET_KWARGS_IDENTIFIABLE["context_types"] != ["base"]
+        )
         else ""
     )
 
