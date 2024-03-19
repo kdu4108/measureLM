@@ -15,6 +15,8 @@ MODEL_ID: EleutherAI/pythia-12b-deduped
 QUERY_TYPES:
 - closed
 - open
+CONTEXT_TYPES:
+- base
 RAW_DATA_PATH: data/YagoECQ/yago_qec.json
 SEED: 5
 UNIFORM_CONTEXTS: true

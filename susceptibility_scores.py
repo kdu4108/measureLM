@@ -76,7 +76,7 @@ def get_args():
     )
     parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed", "open"], help="Query types to use")
     parser.add_argument(
-        "-CT", "--CONTEXT_TYPES", type=json.loads, default=["base", "assertive", "negation"], help="Query types to use"
+        "-CT", "--CONTEXT_TYPES", type=json.loads, default=["assertive", "base", "negation"], help="Query types to use"
     )
     parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"

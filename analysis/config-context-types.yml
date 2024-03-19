@@ -9,14 +9,16 @@ ENTITY_TYPES:
 - entities
 - gpt_fake_entities
 LOAD_IN_8BIT: true
-MAX_CONTEXTS: 500
+MAX_CONTEXTS: 600
 MAX_ENTITIES: 100
 MODEL_ID: EleutherAI/pythia-6.9b-deduped
 QUERY_TYPES:
 - closed
 - open
 CONTEXT_TYPES:
+- assertive
 - base
+- negation
 RAW_DATA_PATH: data/YagoECQ/yago_qec.json
-SEED: 8
+SEED: 11
 UNIFORM_CONTEXTS: true

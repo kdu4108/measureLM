@@ -499,11 +499,12 @@ def ttest(
     score_col="susceptibility_score",
     type_col="type",
     permutations=None,
+    alternative="less",
 ):
     try:
         sus_scores_real = df[df[type_col] == group1][score_col]
         sus_scores_fake = df[df[type_col] == group2][score_col]
-        ttest_res = ttest_ind(sus_scores_real, sus_scores_fake, alternative="less", permutations=permutations)
+        ttest_res = ttest_ind(sus_scores_real, sus_scores_fake, alternative=alternative, permutations=permutations)
         t_stat, p_value = ttest_res.statistic, ttest_res.pvalue
         # print(t_stat, p_value)
         cohen_d = t_stat * np.sqrt(
@@ -538,6 +539,7 @@ def compute_ttest_scores_dfs(
     score_col: str,
     type_col: str = "type",
     permutations=None,
+    alternative="less",
 ):
     ttest_scores_open = [
         {
@@ -549,6 +551,7 @@ def compute_ttest_scores_dfs(
                 score_col=score_col,
                 type_col=type_col,
                 permutations=permutations,
+                alternative=alternative,
             ),
         }
         for k, v in qid_to_score_df.items()
@@ -563,6 +566,7 @@ def compute_ttest_scores_dfs(
                 score_col=score_col,
                 type_col=type_col,
                 permutations=permutations,
+                alternative=alternative,
             ),
         }
         for k, v in tqdm(qid_to_score_df.items())
@@ -626,25 +630,10 @@ def count_num_significant_queries(
     alternative="two-sided",
 ):
     df = df[df[col_name].notna()]
-    if alternative == "two-sided":
-        ranges = {
-            (0, alpha / 2): "less",
-            (alpha / 2, 1 - alpha / 2): "insignificant",
-            (1 - alpha / 2, 1): "more",
-        }
-    elif alternative == "less":
-        ranges = {
-            (0, alpha): "less",
-            (alpha, 1): "insignificant",
-        }
-    elif alternative == "greater":
-        ranges = {
-            (0, alpha): "insignificant",
-            (alpha, 1): "more",
-        }
-    else:
-        raise ValueError("alternative must be 'two-sided', 'less', or 'greater'")
-
+    ranges = {
+        (0, alpha): f"significant ({alternative})",
+        (alpha, 1): "insignificant",
+    }
     # Initialize counters for each range for both Open and Closed p-values
     count = dict()  # {range_val: 0 for range_val in ranges.keys()}
     prop = dict()  # {range_val: 0 for range_val in ranges.keys()}
