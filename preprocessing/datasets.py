@@ -464,6 +464,7 @@ class FriendEnemy(EntityContextQueryDataset):
         ]
         """
         pos_contexts = [
+            "{} truly loves {}.\n",
             "{} loves {}.\n",
             "{} adores {}.\n",
             "{} likes {}.\n",
@@ -486,6 +487,7 @@ class FriendEnemy(EntityContextQueryDataset):
             # "{} acquaints with {}.\n",
         ]
         neg_contexts = [
+            "{} truly hates {}.\n",
             "{} hates {}.\n",
             "{} detests {}.\n",
             "{} dislikes {}.\n",

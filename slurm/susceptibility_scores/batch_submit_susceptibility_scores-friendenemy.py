@@ -10,7 +10,7 @@ RAW_DATA_PATH = "data/FriendEnemy/raw-friend-enemy.csv"
 
 # dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
 dataset_names_and_rdps = [("FriendEnemy", RAW_DATA_PATH)]
-seeds = [1]
+seeds = [2]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -18,7 +18,7 @@ if RUN_LOCALLY:
     max_entities = [5]
 else:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    max_contexts = [657]
+    max_contexts = [803]
     max_entities = [73]
     query_ids = [None]
 
@@ -37,6 +37,7 @@ entity_types = json.dumps(
 query_types = json.dumps(
     ["closed", "open"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+context_types = json.dumps(["base"], separators=(",", ":"))
 
 answer_map = dict()
 # answer_map = {0: [" No", " no", " NO", "No", "no", "NO"], 1: [" Yes", " yes", " YES", "Yes", "yes", "YES"]}
@@ -108,6 +109,8 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{entity_types}",
                                         "-QT",
                                         f"{query_types}",
+                                        "-CT",
+                                        f"{context_types}",
                                         "-AM",
                                         f"{answer_map_in_tokens}",
                                         "-ES",
@@ -120,6 +123,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-MR"] if compute_mr else [])
                                     + (["-O"] if overwrite else [])
                                 )
                             else:
@@ -136,6 +140,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{me}",
                                         f"{entity_types}",
                                         f"{query_types}",
+                                        f"{context_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
                                         f"{batch_sz}",
@@ -145,6 +150,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-MR"] if compute_mr else [])
                                     + (["-O"] if overwrite else [])
                                 )
                                 print(cmd)
