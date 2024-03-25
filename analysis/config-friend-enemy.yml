@@ -1,0 +1,22 @@
+ABLATE_OUT_RELEVANT_CONTEXTS: false
+ANSWER_MAP: null
+BATCH_SZ: 16
+CAP_PER_TYPE: false
+DATASET_NAME: FriendEnemy
+DEDUPLICATE_ENTITIES: false
+ENTITY_SELECTION_FUNC_NAME: random_sample
+ENTITY_TYPES:
+- entities
+- gpt_fake_entities
+LOAD_IN_8BIT: true
+MAX_CONTEXTS: 803
+MAX_ENTITIES: 73
+MODEL_ID: EleutherAI/pythia-6.9b-deduped
+QUERY_TYPES:
+- closed
+- open
+CONTEXT_TYPES:
+- base
+RAW_DATA_PATH: data/FriendEnemy/raw-friend-enemy.csv
+SEED: 2
+UNIFORM_CONTEXTS: false

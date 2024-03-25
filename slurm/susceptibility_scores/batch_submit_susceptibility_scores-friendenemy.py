@@ -17,7 +17,8 @@ if RUN_LOCALLY:
     max_contexts = [10]
     max_entities = [5]
 else:
-    model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
+    # model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
+    model_id_and_quantize_tuples = [("meta-llama/Llama-2-7b-hf", False), ("meta-llama/Llama-2-7b-chat-hf", False)]
     max_contexts = [803]
     max_entities = [73]
     query_ids = [None]
@@ -49,7 +50,7 @@ uniform_contexts = False
 overwrite = True
 
 compute_mr = False
-batch_sz = 32
+batch_sz = 16
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:

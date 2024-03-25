@@ -749,3 +749,33 @@ def write_to_latex_test_sus_and_per_results_by_qid(
         print(latex_table, file=outfile)
 
     return latex_table
+
+
+def explode_val_df_per_qe(val_df_per_qe: pd.DataFrame, columns: List[str]):
+    for col in columns:
+        if isinstance(val_df_per_qe[col].iloc[0], str):
+            val_df_per_qe[col] = val_df_per_qe[col].apply(literal_eval)
+
+    val_df_per_qe["combined"] = val_df_per_qe.apply(
+        lambda row: list(zip(*[row[col] for col in columns])),
+        axis=1,
+    )
+    exploded_df = pd.DataFrame(val_df_per_qe.explode("combined"))
+    exploded_df[columns] = pd.DataFrame(exploded_df["combined"].tolist(), index=exploded_df.index)
+    exploded_df.drop(columns=["combined"], inplace=True)
+    val_df_per_qe.drop(columns=["combined"], inplace=True)
+
+    return exploded_df
+
+
+def infer_context_type(context: str, context_types: Dict[str, str]):
+    # Define the regex pattern to match "{entity} is the capital of {answer}."
+    context_types_regexes = {
+        f"^{v.replace('{entity}', '(.+)').replace('{answer}', '(.+)')}$": k for k, v in context_types.items()
+    }
+    # pattern = r"^(.+) is the capital of (.+)\.$"
+    for regex, ct in context_types_regexes.items():
+        if re.match(regex, context):
+            return ct
+
+    return None

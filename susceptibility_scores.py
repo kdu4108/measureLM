@@ -8,7 +8,7 @@ import sys
 from tqdm import tqdm
 
 import pandas as pd
-from transformers import GPTNeoXForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import numpy as np
 import wandb
@@ -18,16 +18,30 @@ from measuring.estimate_probs import compute_memorization_ratio, estimate_cmi
 from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ, EntityContextQueryDataset
 from preprocessing.utils import format_query
 
+from dotenv import load_dotenv
+
+load_dotenv()
+hf_token = os.environ.get("HF_TOKEN")
+
 
 def load_model_and_tokenizer(model_id, load_in_8bit, device):
     try:
-        model = GPTNeoXForCausalLM.from_pretrained(model_id, load_in_8bit=load_in_8bit, device_map="auto")
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            load_in_8bit=load_in_8bit,
+            torch_dtype=torch.float16 if not load_in_8bit else None,
+            token=hf_token,
+            device_map="auto",
+        )
     except:  # noqa: E722
         print(f"Failed to load model {model_id} in 8-bit. Attempting to load normally.")
-        model = GPTNeoXForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             model_id,
             load_in_8bit=False,
-        ).to(device)
+            torch_dtype=torch.float16,
+            token=hf_token,
+            device_map="auto",
+        )
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,
@@ -75,9 +89,7 @@ def get_args():
         "-ET", "--ENTITY_TYPES", type=json.loads, default=["entities", "gpt_fake_entities"], help="Entity types to use"
     )
     parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed", "open"], help="Query types to use")
-    parser.add_argument(
-        "-CT", "--CONTEXT_TYPES", type=json.loads, default=["assertive", "base", "negation"], help="Query types to use"
-    )
+    parser.add_argument("-CT", "--CONTEXT_TYPES", type=json.loads, default=["base"], help="Query types to use")
     parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
     )
