@@ -1,0 +1,26 @@
+name: measurelm2
+channels:
+- conda-forge
+- pkgs/main
+- pytorch
+dependencies:
+- accelerate
+- ipykernel
+- nb_black
+- numpy
+- openai
+- pandas
+- pre-commit
+- pytest
+- python=3.10
+- python-dotenv
+- pytorch==2.2.0
+- pytorch-cuda=12.1
+- scipy
+- seaborn
+- sparqlwrapper
+- statsmodels
+- torchaudio==2.2.0
+- torchvision==0.17.0
+- transformers
+- wandb

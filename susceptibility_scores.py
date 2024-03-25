@@ -25,7 +25,7 @@ load_dotenv()
 hf_token = os.environ.get("HF_TOKEN")
 
 
-def load_model_and_tokenizer(model_id, load_in_8bit, device, compile_torch=True):
+def load_model_and_tokenizer(model_id, load_in_8bit, device, compile_torch=False):
     try:
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
@@ -53,6 +53,7 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device, compile_torch=True)
     gc.collect()
 
     if compile_torch:
+        # TODO: debug why this appears not to work.
         model = torch.compile(model)
 
     return model, tokenizer
@@ -66,7 +67,11 @@ def get_args():
     )
     parser.add_argument("-S", "--SEED", type=int, default=0, help="Random seed")
     parser.add_argument(
-        "-M", "--MODEL_ID", type=str, default="EleutherAI/pythia-6.9b-deduped", help="Name of the model to use"
+        "-M",
+        "--MODEL_ID",
+        type=str,
+        default="EleutherAI/pythia-6.9b-deduped",
+        help="Name of the model to use from huggingface",
     )
     parser.add_argument("-B", "--LOAD_IN_8BIT", action="store_true", help="Whether to load in 8 bit")
     parser.add_argument("-Q", "--QUERY_ID", type=str, help="Name of the query id, if using YagoECQ dataset")
@@ -91,10 +96,26 @@ def get_args():
         help="Name of the entity selection function name. Must be one of the functions in preprocessing.utils",
     )
     parser.add_argument(
-        "-ET", "--ENTITY_TYPES", type=json.loads, default=["entities", "gpt_fake_entities"], help="Entity types to use"
+        "-ET",
+        "--ENTITY_TYPES",
+        type=json.loads,
+        default=["entities", "gpt_fake_entities"],
+        help="Entity types to use (e.g., a subset of ['entities', 'gpt_fake_entities'])",
     )
-    parser.add_argument("-QT", "--QUERY_TYPES", type=json.loads, default=["closed", "open"], help="Query types to use")
-    parser.add_argument("-CT", "--CONTEXT_TYPES", type=json.loads, default=["base"], help="Query types to use")
+    parser.add_argument(
+        "-QT",
+        "--QUERY_TYPES",
+        type=json.loads,
+        default=["closed", "open"],
+        help="Query types to use (e.g., a subset of ['closed', 'open'])",
+    )
+    parser.add_argument(
+        "-CT",
+        "--CONTEXT_TYPES",
+        type=json.loads,
+        default=["base"],
+        help="Context types to use (e.g., a subset of ['assertive', 'base', 'negation'])",
+    )
     parser.add_argument(
         "-AM", "--ANSWER_MAP", type=json.loads, default=dict(), help="answer map from int to list of ints"
     )
