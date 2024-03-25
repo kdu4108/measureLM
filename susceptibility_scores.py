@@ -6,6 +6,7 @@ import random
 import os
 import sys
 from tqdm import tqdm
+import yaml
 
 import pandas as pd
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -203,9 +204,11 @@ def main():
     dataset_df = dataset.get_contexts_per_query_entity_df()
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
-    print(f"Saving datasets to {input_dir}.")
+    print(f"Saving datasets and run config to {input_dir}.")
     os.makedirs(input_dir, exist_ok=True)
     dataset_df.to_csv(val_data_path)
+    with open(os.path.join(input_dir, "config.yml"), "w") as yaml_file:
+        yaml.dump(DATASET_KWARGS_IDENTIFIABLE, yaml_file, default_flow_style=False)
 
     # if LOG_DATASETS:
     #     print(f"Logging datasets to w&b run {wandb.run}.")
