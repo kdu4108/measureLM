@@ -10,7 +10,7 @@ RAW_DATA_PATH = "data/FriendEnemy/raw-friend-enemy.csv"
 
 # dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
 dataset_names_and_rdps = [("FriendEnemy", RAW_DATA_PATH)]
-seeds = [2]
+seeds = [3]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]

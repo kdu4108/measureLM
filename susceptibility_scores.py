@@ -25,7 +25,7 @@ load_dotenv()
 hf_token = os.environ.get("HF_TOKEN")
 
 
-def load_model_and_tokenizer(model_id, load_in_8bit, device):
+def load_model_and_tokenizer(model_id, load_in_8bit, device, compile_torch=True):
     try:
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
@@ -51,6 +51,10 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device):
 
     torch.cuda.empty_cache()
     gc.collect()
+
+    if compile_torch:
+        model = torch.compile(model)
+
     return model, tokenizer
 
 
