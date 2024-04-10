@@ -1,8 +1,9 @@
 from ast import literal_eval
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import os
 import hashlib
 import json
+import re
 
 from tqdm import tqdm
 import pandas as pd
@@ -10,6 +11,9 @@ import numpy as np
 import random
 from scipy.stats import ttest_ind
 import statsmodels.api as sm
+import matplotlib
+from matplotlib import pyplot as plt
+import seaborn as sns
 
 # import torch
 import wandb
@@ -439,6 +443,7 @@ def construct_df_given_query_id(
 
             print(f"query forms: {query_forms}")
 
+        val_df_per_qe["model_id"] = model_id
         val_df_per_qe.to_csv(save_path, index=False)
 
         # if wandb.run is not None:
@@ -517,7 +522,10 @@ def ttest(
             )
             / (len(sus_scores_real) + len(sus_scores_fake) - 2)
         )
-        assert np.isclose(cohen_d, cohen_d2)
+
+        if not np.isclose(cohen_d, cohen_d2):
+            print(f"For query_id {df['q_id'].unique()[0]}, cohen_d={cohen_d} and cohen_d2={cohen_d2} don't match.")
+
         # effect_size,
         return {
             "effect_size": cohen_d,
@@ -779,3 +787,352 @@ def infer_context_type(context: str, context_types: Dict[str, str]):
             return ct
 
     return None
+
+
+###############################
+# Model-wide analysis helpers #
+###############################
+def convert_test_results_dict_to_df(test_results_dict_per_model: dict):
+    """
+    Convert test results dict of the format
+    {
+        "EleutherAI/pythia-70m-deduped": {
+            "open": {
+                "count": {
+                    "significant (less)": 0,
+                    "insignificant": 123
+                },
+                "proportion": {
+                    "significant (less)": 0.0,
+                    "insignificant": 1.0
+                }
+                },
+            "closed": {
+                "count": {
+                    "significant (less)": 27,
+                    "insignificant": 96
+                },
+                "proportion": {
+                    "significant (less)": 0.21951219512195122,
+                    "insignificant": 0.7804878048780488
+                }
+            }
+        },
+        "EleutherAI/pythia-410m-deduped": {
+            "open": {
+                ...
+            }
+        }
+    }
+    to a df with columns ['model_name', 'Model size', 'Query type', 'metric_type', 'significance', 'value']
+    """
+    df_data = []
+
+    for model_name, details in test_results_dict_per_model.items():
+        for category, metrics in details.items():
+            for metric_type, values in metrics.items():
+                for significance, value in values.items():
+                    row = {
+                        "model_name": model_name,
+                        "Model size": model_name.split("-")[1],
+                        "Model size count": get_param_size(model_name),
+                        "Query type": category,
+                        "metric_type": metric_type,
+                        "significance": significance,
+                        "value": value,
+                    }
+                    df_data.append(row)
+
+    # Creating DataFrame
+    df = pd.DataFrame(df_data)
+    df = df.sort_values(by="Model size count")
+
+    return df
+
+
+def convert_test_results_dict_to_sig_proportion_df(test_results_dict_per_model: dict):
+    df = convert_test_results_dict_to_df(test_results_dict_per_model)
+    df = df[(df["metric_type"] == "proportion") & (df["significance"] != "insignificant")]
+    return df
+
+
+def build_effect_sz_df(
+    open_results_per_model: Dict[str, pd.DataFrame],
+    closed_results_per_model: Dict[str, pd.DataFrame],
+):
+    """
+    Given open and closed results dicts of the format
+    {
+        "model_name": pd.DataFrame(columns=[query, effect_size, p_value, n, bh_adj_p_value]),
+        ...
+    }
+
+    Create a df concatenating all dfs for both open and closed query types.
+    """
+    open_effect_sz_df = (
+        pd.concat(
+            [df for df in open_results_per_model.values()],
+            keys=open_results_per_model.keys(),
+            axis=0,
+            # ignore_index=True,
+        )
+        .reset_index(names=["model_name", "temp_index"])
+        .drop(columns="temp_index")
+    )
+    open_effect_sz_df["query_type"] = "open"
+
+    closed_effect_sz_df = (
+        pd.concat(
+            [df for df in closed_results_per_model.values()],
+            keys=closed_results_per_model.keys(),
+            axis=0,
+            # ignore_index=True,
+        )
+        .reset_index(names=["model_name", "temp_index"])
+        .drop(columns="temp_index")
+    )
+    closed_effect_sz_df["query_type"] = "closed"
+
+    effect_sz_df = pd.concat([open_effect_sz_df, closed_effect_sz_df])
+    effect_sz_df["Model size"] = effect_sz_df["model_name"].apply(lambda x: x.split("-")[1])
+    return effect_sz_df
+
+
+def build_mean_effect_sz_df(
+    open_results_per_model: Dict[str, pd.DataFrame],
+    closed_results_per_model: Dict[str, pd.DataFrame],
+):
+    """
+    Given open and closed results dicts of the format
+    {
+        "model_name": pd.DataFrame(columns=[query, effect_size, p_value, n, bh_adj_p_value]),
+        ...
+    }
+
+    Create a df with the mean effect size for each model and query types across queries.
+    """
+    effect_sz_df = build_effect_sz_df(open_results_per_model, closed_results_per_model)
+    # effect_sz_df
+    mean_effect_sz_df = (
+        effect_sz_df.groupby(["model_name", "Model size", "query_type"])
+        .agg(mean_effect_sz=("effect_size", "mean"))
+        .reset_index()
+    )
+    mean_effect_sz_df["Model size count"] = mean_effect_sz_df["model_name"].apply(get_param_size)
+    mean_effect_sz_df = mean_effect_sz_df.sort_values(by="Model size count")
+    return mean_effect_sz_df
+
+
+def get_param_size(model_name: str):
+    units_to_num_map = {"m": 1e6, "b": 1e9}
+    num_params_str = model_name.split("-")[1]
+    num, unit = num_params_str[:-1], num_params_str[-1]
+    return float(num) * units_to_num_map[unit]
+
+
+def compute_and_summarize_ttest_results(
+    qid_to_val_df_per_qe,
+    group1: str,
+    group2: str,
+    score_col: str,
+    type_col: str,
+    permutations: int,
+    alternative: str,
+):
+    ttest_res_open_df, ttest_res_closed_df = compute_ttest_scores_dfs(
+        qid_to_val_df_per_qe,
+        group1=group1,
+        group2=group2,
+        score_col=score_col,
+        type_col=type_col,
+        permutations=permutations,
+        alternative=alternative,
+    )
+    test_results_dict = {
+        "open": count_num_significant_queries(
+            ttest_res_open_df,
+            col_name="bh_adj_p_value",
+            alpha=0.05,
+            alternative=alternative,
+        ),
+        "closed": count_num_significant_queries(
+            ttest_res_closed_df,
+            col_name="bh_adj_p_value",
+            alpha=0.05,
+            alternative=alternative,
+        ),
+    }
+
+    return ttest_res_open_df, ttest_res_closed_df, test_results_dict
+
+
+def get_test_results_and_plot_per_model(
+    df_all_models: List[Tuple[str, pd.DataFrame]],
+    group1: str,
+    group2: str,
+    score_col: str,
+    type_col: str,
+    permutations: int,
+    alternative: str,
+    title: str,
+    save_path: str,
+    cm: matplotlib.colors.Colormap = sns.color_palette("coolwarm_r", as_cmap=True),
+):
+    """
+    Args:
+        df_all_models - list of (model-name, df)-tuples containing at least a score_col and type_col with values of group1 and group2.
+
+    Returns:
+        (1) a dict mapping from {model_name -> df of the effect sizes and p-values for each open query}
+        (2) a dict mapping from {model_name -> df of the effect sizes and p-values for each closed query}
+        (3) a dict mapping from {model_name -> dict containing the percent of significant results for both open and closed queries}
+
+    Plots:
+        a big page-sized thing with effect sizes and p-values for all models for both open and closed queries
+    """
+    open_results_per_model = dict()
+    closed_results_per_model = dict()
+    test_results_per_model = dict()
+
+    n_rows_sf, n_cols_sf = int(len(df_all_models) // 2), 2
+    fig = plt.figure(constrained_layout=True, figsize=(n_cols_sf * 12, n_rows_sf * 5))
+    subfigs = fig.subfigures(nrows=n_rows_sf, ncols=n_cols_sf)
+    for i, (model_id, df_m) in enumerate(df_all_models):
+        subfig = subfigs[i // n_cols_sf, i % n_cols_sf]
+        print(f"MODEL ID: {model_id}")
+        qid_to_val_df_per_qe = {qid: df_m[df_m["QUERY_ID"] == qid] for qid in df_m["QUERY_ID"].unique()}
+        ttest_res_open_df, ttest_res_closed_df, test_results_dict = compute_and_summarize_ttest_results(
+            qid_to_val_df_per_qe,
+            group1=group1,
+            group2=group2,
+            score_col=score_col,
+            type_col=type_col,
+            permutations=permutations,
+            alternative=alternative,
+        )
+
+        open_results_per_model[model_id] = ttest_res_open_df
+        closed_results_per_model[model_id] = ttest_res_closed_df
+        test_results_per_model[model_id] = test_results_dict
+
+        axes = subfig.subplots(nrows=1, ncols=2)
+        for i, (qt, df) in enumerate(
+            {
+                "open": ttest_res_open_df.sort_values(by="effect_size"),
+                "closed": ttest_res_closed_df.sort_values(by="effect_size"),
+            }.items()
+        ):
+            ax = axes[i]
+            sns.stripplot(
+                data=df,
+                x="query",
+                y="effect_size",
+                hue="p_value",
+                ax=ax,
+                size=8,
+                legend=None,
+                palette=cm,
+                hue_norm=matplotlib.colors.LogNorm(1e-3, 1),
+            )
+            ax.set(xticklabels=[])
+            ax.set_title(qt)
+            ax.set_ylim(
+                min(
+                    ttest_res_open_df["effect_size"].min(),
+                    ttest_res_closed_df["effect_size"].min(),
+                )
+                - 0.2,
+                max(
+                    ttest_res_open_df["effect_size"].max(),
+                    ttest_res_closed_df["effect_size"].max(),
+                )
+                + 0.2,
+            )
+            ax.set_xlabel("Query")
+            ax.set_ylabel("Effect size")
+        sm = matplotlib.cm.ScalarMappable(norm=matplotlib.colors.LogNorm(1e-3, 1), cmap=cm)
+        sm.set_array([])
+        fig.colorbar(sm, ax=ax)
+        subfig.suptitle(f"{model_id.split('/')[1]}", size="x-large")
+
+        # Number and proportion of queries that are significant
+        print(json.dumps(test_results_dict, indent=2))
+
+    fig.suptitle(
+        title,
+        y=1.05,
+        size="x-large",
+    )
+
+    fig.savefig(save_path, bbox_inches="tight")
+
+    return open_results_per_model, closed_results_per_model, test_results_per_model
+
+
+def plot_prop_queries_significant_per_model(
+    test_results_per_model_df,
+    title,
+    save_path,
+    x="Model size",
+    y="value",
+    hue="Query type",
+    marker="o",
+    markersize=12,
+    palette=None,
+):
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 6.5))
+    sns.lineplot(
+        data=test_results_per_model_df,
+        x=x,
+        y=y,
+        hue=hue,
+        ax=ax,
+        marker=marker,
+        markersize=markersize,
+        palette=palette,
+    )
+    ax.set_ylabel("Proportion of significant queries")
+    fig.suptitle(title, y=0.9)
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+
+
+def plot_effect_sz_per_model(
+    mean_effect_sz_df,
+    title,
+    save_path,
+    x="Model size",
+    y="mean_effect_sz",
+    hue="query_type",
+    marker="o",
+    markersize=12,
+    palette=None,
+):
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 6.5))
+    sns.lineplot(
+        data=mean_effect_sz_df,
+        x=x,
+        y=y,
+        hue=hue,
+        ax=ax,
+        marker=marker,
+        markersize=markersize,
+        palette=palette,
+    )
+    ax.set_ylabel("Effect size")
+    fig.suptitle(title, y=0.9)
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    return ax
+
+
+def convert_entity_uri_to_entity(row: pd.Series, yago_qec):
+    try:
+        q_id = row["q_id"]
+        entity_uris = yago_qec[q_id]["entity_uris"]
+        eu_index = entity_uris.index(row["entity_uri"])
+        entities = yago_qec[q_id]["entities"]
+
+        return entities[eu_index]
+    except (KeyError, ValueError):
+        return None

@@ -19,6 +19,6 @@ CONTEXT_TYPES:
 - assertive
 - base
 - negation
-RAW_DATA_PATH: data/YagoECQ/yago_qec.json
+RAW_DATA_PATH: data/YagoECQ/yago_qec copy.json
 SEED: 11
 UNIFORM_CONTEXTS: true

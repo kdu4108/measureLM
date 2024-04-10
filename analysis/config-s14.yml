@@ -2,21 +2,23 @@ ABLATE_OUT_RELEVANT_CONTEXTS: false
 ANSWER_MAP: null
 BATCH_SZ: 16
 CAP_PER_TYPE: false
-DATASET_NAME: FriendEnemy
-DEDUPLICATE_ENTITIES: false
-ENTITY_SELECTION_FUNC_NAME: random_sample
+DATASET_NAME: YagoECQ
+DEDUPLICATE_ENTITIES: true
+ENTITY_SELECTION_FUNC_NAME: top_entity_uri_degree
 ENTITY_TYPES:
 - entities
 - gpt_fake_entities
 LOAD_IN_8BIT: false
-MAX_CONTEXTS: 803
-MAX_ENTITIES: 73
+MAX_CONTEXTS: 600
+MAX_ENTITIES: 100
 MODEL_ID: EleutherAI/pythia-6.9b-deduped
 QUERY_TYPES:
 - closed
 - open
 CONTEXT_TYPES:
+- assertive
 - base
-RAW_DATA_PATH: data/FriendEnemy/raw-friend-enemy.csv
-SEED: 11
-UNIFORM_CONTEXTS: false
+- negation
+RAW_DATA_PATH: data/YagoECQ/yago_qec.json
+SEED: 14
+UNIFORM_CONTEXTS: true
