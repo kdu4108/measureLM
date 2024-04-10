@@ -39,11 +39,12 @@ class TestEstimateProbXGivenE(ut.TestCase):
             "I hated this.",
             "I loved it.",
         ]
+        contexts_set = sorted(set(contexts))
         contexts_counter = Counter(contexts)
-        entity = "entity1"
+        entity = ("entity1",)
 
         expected = np.array([1 / 4, 1 / 2, 1 / 4])
-        actual = estimate_prob_x_given_e(entity=entity, contexts=set(contexts), contexts_counter=contexts_counter)
+        actual = estimate_prob_x_given_e(entity=entity, contexts=contexts_set, contexts_counter=contexts_counter)
         assert np.array_equal(actual, expected)
 
 
@@ -81,7 +82,7 @@ class TestEstimateProbNextWordGivenXAndEntity(ut.TestCase):
             "I hated this. ",
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
 
         actual = estimate_prob_next_word_given_x_and_entity(
             query=query,
@@ -120,7 +121,7 @@ class TestEstimateProbNextWordGivenXAndEntity(ut.TestCase):
             "I hated this. ",
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
 
         actual = estimate_prob_next_word_given_x_and_entity(
             query=query,
@@ -167,7 +168,9 @@ class TestEstimateProbYGivenXAndEntity(ut.TestCase):
             "I hated this. ",
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
+        bs = 32
+        answer_entity = None
 
         estimate_prob_y_given_context_and_entity(
             query=query,
@@ -178,6 +181,8 @@ class TestEstimateProbYGivenXAndEntity(ut.TestCase):
             num_samples=None,
             max_output_length=1,
             answer_map=None,
+            bs=bs,
+            answer_entity=answer_entity,
         )
 
         mock_estimate_prob_next_word_given_x_and_entity.assert_called_once_with(
@@ -187,6 +192,8 @@ class TestEstimateProbYGivenXAndEntity(ut.TestCase):
             model=model,
             tokenizer=tokenizer,
             answer_map=None,
+            bs=bs,
+            answer_entity=answer_entity,
         )
 
         mock_sample_y_given_x_and_entity.assert_not_called()
@@ -206,6 +213,8 @@ class TestEstimateProbYGivenXAndEntity(ut.TestCase):
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
         entity = "entity1"
+        bs = 32
+        answer_entity = None
 
         estimate_prob_y_given_context_and_entity(
             query=query,
@@ -216,6 +225,8 @@ class TestEstimateProbYGivenXAndEntity(ut.TestCase):
             num_samples=32,
             max_output_length=1,
             answer_map=None,
+            bs=bs,
+            answer_entity=answer_entity,
         )
 
         mock_sample_y_given_x_and_entity.assert_called_once_with(
@@ -226,6 +237,7 @@ class TestEstimateProbYGivenXAndEntity(ut.TestCase):
             tokenizer=tokenizer,
             num_samples=32,
             max_output_length=1,
+            answer_entity=answer_entity,
         )
 
         mock_estimate_prob_next_word_given_x_and_entity.assert_not_called()
@@ -477,7 +489,7 @@ class TestShardedScoreModel(ut.TestCase):
         tokenizer = type(self).tokenizer
         prompts = ["A is rated ", "Item B is rated ", "C is also rated ", "The item D is rated as "]
 
-        batch_output = score_model_for_next_word_prob(prompts, model, tokenizer)
+        batch_output = score_model_for_next_word_prob(prompts, model, tokenizer).detach().cpu()
         sharded1_output = sharded_score_model(score_model_for_next_word_prob, model, tokenizer, prompts, bs=1)
         sharded2_output = sharded_score_model(score_model_for_next_word_prob, model, tokenizer, prompts, bs=2)
         sharded3_output = sharded_score_model(score_model_for_next_word_prob, model, tokenizer, prompts, bs=3)
@@ -489,7 +501,7 @@ class TestShardedScoreModel(ut.TestCase):
         assert torch.allclose(batch_output, sharded4_output)
 
 
-class TestEstimateCMI(ut.TestCase):
+class TestComputeSusAndPScores(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.model_name = "gpt2"
@@ -507,7 +519,7 @@ class TestEstimateCMI(ut.TestCase):
 
     @patch("measuring.estimate_probs.estimate_prob_x_given_e")
     @patch("measuring.estimate_probs.estimate_prob_y_given_context_and_entity")
-    def test_estimate_cmi_when_contexts_have_no_effect_is_0(
+    def test_compute_sus_and_pscore_when_contexts_have_no_effect_is_0(
         self, mock_estimate_prob_y_given_context_and_entity, mock_estimate_prob_x_given_e
     ):
         model = type(self).model
@@ -516,8 +528,8 @@ class TestEstimateCMI(ut.TestCase):
         output_size = 4  # noqa: F841
         num_contexts = 3
 
-        mock_estimate_prob_x_given_e.return_value = torch.ones(num_contexts) / num_contexts  # shape: (3,)
-        mock_estimate_prob_y_given_context_and_entity.return_value = torch.tensor(
+        mock_estimate_prob_x_given_e.return_value = np.ones(num_contexts) / num_contexts  # shape: (3,)
+        mock_estimate_prob_y_given_context_and_entity.return_value = np.array(
             [
                 [0.25, 0.25, 0.25, 0.25],
                 [0.25, 0.25, 0.25, 0.25],
@@ -531,9 +543,9 @@ class TestEstimateCMI(ut.TestCase):
             "I hated this. ",
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
 
-        actual, _ = compute_sus_and_persuasion_scores(
+        actual_sus_score, actual_p_scores = compute_sus_and_persuasion_scores(
             query=query,
             entity=entity,
             contexts=contexts,
@@ -541,13 +553,15 @@ class TestEstimateCMI(ut.TestCase):
             tokenizer=tokenizer,
             answer_map=None,
         )
-        expected = 0.0
+        expected_sus_score = 0.0
+        expected_p_scores = np.array([0.0, 0.0, 0.0])
 
-        assert actual == expected
+        assert actual_sus_score == expected_sus_score
+        assert np.allclose(actual_p_scores, expected_p_scores)
 
     @patch("measuring.estimate_probs.estimate_prob_x_given_e")
     @patch("measuring.estimate_probs.estimate_prob_y_given_context_and_entity")
-    def test_estimate_cmi_when_context_determines_answer_is_entropy(
+    def test_compute_sus_and_pscore_when_context_determines_answer_is_entropy(
         self, mock_estimate_prob_y_given_context_and_entity, mock_estimate_prob_x_given_e
     ):
         model = type(self).model
@@ -556,8 +570,8 @@ class TestEstimateCMI(ut.TestCase):
         output_size = 4
         num_contexts = 4
 
-        mock_estimate_prob_x_given_e.return_value = torch.ones(num_contexts) / num_contexts
-        mock_estimate_prob_y_given_context_and_entity.return_value = torch.tensor(
+        mock_estimate_prob_x_given_e.return_value = np.ones(num_contexts) / num_contexts
+        mock_estimate_prob_y_given_context_and_entity.return_value = np.array(
             [
                 [1.0, 0.0, 0.0, 0.0],
                 [0.0, 1.0, 0.0, 0.0],
@@ -570,7 +584,7 @@ class TestEstimateCMI(ut.TestCase):
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
         entity = "entity1"
 
-        actual, _ = compute_sus_and_persuasion_scores(
+        actual_sus_score, actual_p_scores = compute_sus_and_persuasion_scores(
             query=query,
             entity=entity,
             contexts=contexts,
@@ -581,10 +595,14 @@ class TestEstimateCMI(ut.TestCase):
         # I(X; Y | Z) = I(contexts; answers | entity) = H(answers | entity) - H(answers | contexts, entity)
         # The answers distribution is uniform, so the entropy is log(output_size)
         # The answers distribution conditioned on contexts has full prob mass on an output depending on the context, so the entropy is 0 (there's 0 uncertainty in the answer once you know the context).
-        # Therefore, the CMI should just be the value of the entropy of the answer distribution
-        expected = np.log(output_size) - 0
+        # Therefore, the CMI (susceptibility score) should just be the value of the entropy of the answer distribution
+        expected_sus_score = np.log(output_size) - 0
 
-        assert np.isclose(actual, expected)
+        # The contexts are all equally and fully persuasive, so the persuasion score of each context is equivalent to the CMI.
+        expected_p_scores = np.array([expected_sus_score, expected_sus_score, expected_sus_score, expected_sus_score])
+
+        assert np.isclose(actual_sus_score, expected_sus_score)
+        assert np.allclose(actual_p_scores, expected_p_scores)
 
 
 class TestEstimateEntityScores(ut.TestCase):
@@ -614,7 +632,7 @@ class TestEstimateEntityScores(ut.TestCase):
         output_size = 4  # noqa: F841
         num_contexts = 3
 
-        mock_estimate_prob_x_given_e.return_value = torch.ones(num_contexts) / num_contexts  # shape: (3,)
+        mock_estimate_prob_x_given_e.return_value = np.ones(num_contexts) / num_contexts  # shape: (3,)
         mock_score_model_for_next_word_prob.side_effect = [
             torch.tensor([0.25, 0.25, 0.25, 0.25]),
             torch.tensor(
@@ -632,7 +650,7 @@ class TestEstimateEntityScores(ut.TestCase):
             "I hated this. ",
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
 
         actual = estimate_entity_score(
             query=query,
@@ -658,7 +676,7 @@ class TestEstimateEntityScores(ut.TestCase):
         output_size = 4  # noqa: F841
         num_contexts = 3
 
-        mock_estimate_prob_x_given_e.return_value = torch.ones(num_contexts) / num_contexts
+        mock_estimate_prob_x_given_e.return_value = np.ones(num_contexts) / num_contexts
         mock_score_model_for_next_word_prob.side_effect = [
             torch.tensor([0.25, 0.25, 0.25, 0.25]),
             torch.tensor(
@@ -672,7 +690,7 @@ class TestEstimateEntityScores(ut.TestCase):
 
         contexts = ["The movie was great. ", "I loved it. ", "I hated this. "]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
 
         actual = estimate_entity_score(
             query=query,

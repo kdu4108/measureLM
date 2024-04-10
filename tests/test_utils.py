@@ -13,7 +13,7 @@ class TestFormatQuery(ut.TestCase):
             "I hated this. ",
         ]
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-        entity = "entity1"
+        entity = ("entity1",)
 
         expected = [
             "The movie was great. On a scale from 1 to 5 stars, the quality of this movie, 'entity1', is rated ",
