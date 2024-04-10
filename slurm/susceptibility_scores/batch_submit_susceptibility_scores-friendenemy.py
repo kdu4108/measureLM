@@ -10,15 +10,15 @@ RAW_DATA_PATH = "data/FriendEnemy/raw-friend-enemy.csv"
 
 # dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
 dataset_names_and_rdps = [("FriendEnemy", RAW_DATA_PATH)]
-seeds = [3]
+seeds = [11]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
     max_contexts = [10]
     max_entities = [5]
 else:
-    # model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    model_id_and_quantize_tuples = [("meta-llama/Llama-2-7b-hf", False), ("meta-llama/Llama-2-7b-chat-hf", False)]
+    model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", False)]
+    # model_id_and_quantize_tuples = [("meta-llama/Llama-2-7b-hf", False), ("meta-llama/Llama-2-7b-chat-hf", False)]
     max_contexts = [803]
     max_entities = [73]
     query_ids = [None]

@@ -11,7 +11,7 @@ with open(YAGO_QEC_PATH) as f:
     yago_qec = json.load(f)
 
 dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-seeds = [11]
+seeds = [14]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
@@ -20,11 +20,12 @@ if RUN_LOCALLY:
     query_ids = list(yago_qec.keys())[:5]
 else:
     model_id_and_quantize_tuples = [
-        # ("EleutherAI/pythia-70m-deduped", False),
-        # ("EleutherAI/pythia-410m-deduped", False),
-        # ("EleutherAI/pythia-1.4b-deduped", False),
-        ("EleutherAI/pythia-6.9b-deduped", True),
-        # ("EleutherAI/pythia-12b-deduped", True),
+        ("EleutherAI/pythia-70m-deduped", False, 32),
+        ("EleutherAI/pythia-410m-deduped", False, 32),
+        ("EleutherAI/pythia-1.4b-deduped", False, 32),
+        ("EleutherAI/pythia-2.8b-deduped", False, 16),
+        ("EleutherAI/pythia-6.9b-deduped", False, 8),
+        ("EleutherAI/pythia-12b-deduped", True, 8),
     ]
     max_contexts = [600]
     max_entities = [100]
@@ -72,7 +73,7 @@ uniform_contexts = True
 overwrite = False
 
 compute_mr = False
-batch_sz = 8
+# batch_sz = 8
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:
@@ -104,7 +105,7 @@ def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]
 
 for ds, rdp in dataset_names_and_rdps:
     for seed in seeds:
-        for model_id, do_quantize in model_id_and_quantize_tuples:
+        for model_id, do_quantize, bs in model_id_and_quantize_tuples:
             answer_map_in_tokens = convert_answer_map_to_tokens(model_id, answer_map)
             for qid in query_ids:
                 for mc in max_contexts:
@@ -139,7 +140,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         "-ES",
                                         f"{es}",
                                         "-BS",
-                                        f"{batch_sz}",
+                                        f"{bs}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
@@ -166,7 +167,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{context_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
-                                        f"{batch_sz}",
+                                        f"{bs}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
