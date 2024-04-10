@@ -8,6 +8,8 @@ def format_query(query: str, entity: Tuple[str], context: str, prefix="", answer
     Number of elements in entity must match the number of format {} things in query.
     This is to handle for multiple-entity entities (e.g. friend enemy pairs)
     """
+    if not isinstance(entity, tuple):
+        raise ValueError("entity must be of type tuple.")
     if "{entity}" in query:
         if "{answer}" in query:
             if answer is None:
