@@ -202,7 +202,6 @@ def estimate_prob_next_word_given_x_and_entity(
       possible_outputs - a dict mapping from all observed outputs to its unique index.
     """
     complete_queries = [format_query(query, entity, context, answer=answer_entity) for context in contexts]
-
     if tokenizer.padding_side != "left":
         raise ValueError(
             f"Expected tokenizer {tokenizer} to have padding side of `left` for batch generation, instead has padding side of `{tokenizer.padding_side}`. Please make sure you initialize the tokenizer to use left padding."
@@ -476,7 +475,7 @@ def compute_memorization_ratio(
     contexts: List[str],
     model,
     tokenizer,
-    context_template: str,
+    context_templates: List[str],
     bs: int = 32,
     answer_entity: Optional[str] = None,
 ) -> Tuple[float, List[int], List[str]]:
@@ -491,6 +490,7 @@ def compute_memorization_ratio(
         contexts: List[str] - list of contexts prepended to the query.
         model - the model to use for scoring
         tokenizer - the tokenizer to use for tokenizing the contexts and query
+        context_templates - list containing the template corresponding to each context
         answer_map - dict from the answer support (as an int) to the tokens which qualify into the respective answer.
         bs - batch size to use for scoring the model
         answer_entity - the entity representing the "answer" to a question. Formatted into closed queries.
@@ -515,7 +515,7 @@ def compute_memorization_ratio(
 
     outputs: List[str] = tokenizer.batch_decode(output_tokens)  # shape: (len(contexts),)
     context_answers: List[str] = [
-        extract_answer(context_template=context_template, sentence=c) for c in contexts
+        extract_answer(context_template=ct, sentence=c) for c, ct in zip(contexts, context_templates)
     ]  # shape: (len(contexts),)
 
     og_or_ctx_answers: List[AnswerGroup] = [

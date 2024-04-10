@@ -1,6 +1,7 @@
 import os
 import hashlib
 import json
+import re
 from typing import Optional, List, Dict
 from requests.exceptions import HTTPError
 
@@ -209,3 +210,16 @@ def construct_paths_and_dataset_kwargs(
         model_id,
         DATASET_KWARGS_IDENTIFIABLE,
     )
+
+
+def infer_context_type(context: str, context_types: Dict[str, str]):
+    # Define the regex pattern to match "{entity} is the capital of {answer}."
+    context_types_regexes = {
+        f"^{v.replace('{entity}', '(.+)').replace('{answer}', '(.+)')}$": k for k, v in context_types.items()
+    }
+    # pattern = r"^(.+) is the capital of (.+)\.$"
+    for regex, ct in context_types_regexes.items():
+        if re.match(regex, context):
+            return ct, context_types[ct]
+
+    return None

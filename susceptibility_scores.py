@@ -14,7 +14,7 @@ import torch
 import numpy as np
 import wandb
 
-from utils import construct_paths_and_dataset_kwargs, construct_artifact_name
+from utils import construct_paths_and_dataset_kwargs, construct_artifact_name, infer_context_type
 from measuring.estimate_probs import compute_memorization_ratio, estimate_cmi
 from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ, EntityContextQueryDataset
 from preprocessing.utils import format_query
@@ -386,7 +386,7 @@ def main():
                 contexts=row["contexts"],
                 model=model,
                 tokenizer=tokenizer,
-                context_template=dataset.context_templates[0],
+                context_templates=[infer_context_type(c, dataset.context_templates)[1] for c in row["contexts"]],
                 bs=BATCH_SZ,
                 answer_entity=row["answer"],
             ),
