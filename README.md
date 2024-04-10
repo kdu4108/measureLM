@@ -83,7 +83,7 @@ The main entry point to run a single experiment is `susceptibility_scores.py`. T
 * `--MAX_CONTEXTS` (the number of contexts to use)
 * `--MAX_ENTITIES` (the number of entities to use)
 
-The remaining arguments (visible via `python susceptibility_scores.py --help`) are either dataset-specific (e.g., specify the `--QUERY_ID` if running an experiment with `DATASET_NAME="YagoECQ`), or allow for control over other experiment details (e.g., which query types to use, the model's batch size for inference, how to sample entities, etc.).
+The remaining arguments (visible via `python susceptibility_scores.py --help`) are either dataset-specific (e.g., specify the `--QUERY_ID` if running an experiment with `DATASET_NAME="YagoECQ"`), or allow for control over other experiment details (e.g., which query types to use, the model's batch size for inference, how to sample entities, etc.).
 
 An example command is:
 ```
