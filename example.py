@@ -1,6 +1,6 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from measuring.estimate_probs import estimate_cmi
+from measuring.estimate_probs import compute_sus_and_persuasion_scores
 
 query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
 entity = "The Dark Knight"
@@ -30,7 +30,7 @@ tokenizer = AutoTokenizer.from_pretrained(
 )
 
 query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-susceptibility_score, _, persuasion_scores = estimate_cmi(query, entity, contexts, model, tokenizer)
+susceptibility_score, persuasion_scores = compute_sus_and_persuasion_scores(query, entity, contexts, model, tokenizer)
 print(f"Susceptibility score for entity '{entity}': {susceptibility_score}.")
 print(f"Persuasion scores for each context for entity '{entity}':")
 for i, context in enumerate(contexts):

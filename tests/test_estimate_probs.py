@@ -9,7 +9,7 @@ from measuring.estimate_probs import (
     estimate_prob_y_given_context_and_entity,
     estimate_prob_x_given_e,
     estimate_prob_next_word_given_x_and_entity,
-    estimate_cmi,
+    compute_sus_and_persuasion_scores,
     score_model_for_next_word_prob,
     create_position_ids_from_input_ids,
     sharded_score_model,
@@ -533,7 +533,7 @@ class TestEstimateCMI(ut.TestCase):
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
         entity = "entity1"
 
-        actual = estimate_cmi(
+        actual, _ = compute_sus_and_persuasion_scores(
             query=query,
             entity=entity,
             contexts=contexts,
@@ -570,7 +570,7 @@ class TestEstimateCMI(ut.TestCase):
         query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
         entity = "entity1"
 
-        actual = estimate_cmi(
+        actual, _ = compute_sus_and_persuasion_scores(
             query=query,
             entity=entity,
             contexts=contexts,

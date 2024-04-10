@@ -15,7 +15,7 @@ import numpy as np
 import wandb
 
 from utils import construct_paths_and_dataset_kwargs, construct_artifact_name, infer_context_type
-from measuring.estimate_probs import compute_memorization_ratio, estimate_cmi
+from measuring.estimate_probs import compute_memorization_ratio, compute_sus_and_persuasion_scores
 from preprocessing.datasets import CountryCapital, FriendEnemy, WorldLeaders, YagoECQ, EntityContextQueryDataset
 from preprocessing.utils import format_query
 
@@ -26,11 +26,13 @@ hf_token = os.environ.get("HF_TOKEN")
 
 
 def load_model_and_tokenizer(model_id, load_in_8bit, device, compile_torch=False):
+    # Loading in torch.float16 will not work for CPUs. Also, some GPUs might not support fp16 precision.
+    dtype = torch.float16 if device != "cpu" else None
     try:
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
             load_in_8bit=load_in_8bit,
-            torch_dtype=torch.float16 if not load_in_8bit else None,
+            torch_dtype=dtype if not load_in_8bit else None,
             token=hf_token,
             device_map="auto",
         )
@@ -39,7 +41,7 @@ def load_model_and_tokenizer(model_id, load_in_8bit, device, compile_torch=False
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
             load_in_8bit=False,
-            torch_dtype=torch.float16,
+            torch_dtype=dtype,
             token=hf_token,
             device_map="auto",
         )
@@ -336,7 +338,7 @@ def main():
 
         tqdm.pandas()
         val_df_contexts_per_qe["sus_score_and_persuasion_scores"] = val_df_contexts_per_qe.progress_apply(
-            lambda row: estimate_cmi(
+            lambda row: compute_sus_and_persuasion_scores(
                 query=row["query_form"],
                 entity=row["entity"],
                 contexts=row["contexts"],
@@ -351,12 +353,9 @@ def main():
         val_df_contexts_per_qe["susceptibility_score"] = val_df_contexts_per_qe[
             "sus_score_and_persuasion_scores"
         ].apply(lambda x: x[0])
-        val_df_contexts_per_qe["persuasion_scores"] = val_df_contexts_per_qe["sus_score_and_persuasion_scores"].apply(
-            lambda x: x[1]
-        )
         val_df_contexts_per_qe["persuasion_scores_kl"] = val_df_contexts_per_qe[
             "sus_score_and_persuasion_scores"
-        ].apply(lambda x: x[2])
+        ].apply(lambda x: x[1])
         val_df_contexts_per_qe["full_query_example"] = val_df_contexts_per_qe.progress_apply(
             lambda row: format_query(
                 query=row["query_form"], entity=row["entity"], context=row["contexts"][0], answer=row["answer"]
@@ -367,11 +366,6 @@ def main():
         val_df_contexts_per_qe.to_csv(val_results_path)
     else:
         print("All cached sus score results already on disk.")
-        # val_df_contexts_per_qe = pd.read_csv(
-        #     val_results_path,
-        #     index_col=0,
-        #     converters={"contexts": literal_eval, "entity": literal_eval, "persuasion_scores": literal_eval},
-        # )
 
     if COMPUTE_MR and ("sampled_mr" not in mr_per_qe_df.columns or OVERWRITE):
         print("Computing memorization ratio results.")
@@ -402,18 +396,6 @@ def main():
             print("COMPUTE_MR is False, skipping computing MR.")
         else:
             print("MR already computed in `mr_results_path` cached on disk.")
-        # val_df_contexts_per_qe = pd.read_csv(
-        #     val_results_path,
-        #     index_col=0,
-        #     converters={
-        #         "contexts": literal_eval,
-        #         "entity": literal_eval,
-        #         "persuasion_scores": literal_eval,
-        #         "sampled_mr": literal_eval,
-        #         "sampled_answergroups": literal_eval,
-        #         "sampled_outputs": literal_eval,
-        #     },
-        # )
 
     # After loading/preprocessing your dataset, log it as an artifact to W&B
     if LOG_DATASETS:

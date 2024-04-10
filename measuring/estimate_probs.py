@@ -392,7 +392,17 @@ def p_score_kl(prob_y_given_e, prob_y_given_context_and_entity):
     return persuasion_scores
 
 
-def estimate_cmi(
+def p_scores_per_context(p_scores, contexts_set, contexts, dtype=np.float64):
+    """
+    Given a p-score for each context in contexts_set, returns the p-scores for each context in contexts.
+    p_scores and contexts_set should be the same length.
+    """
+    context_to_pscore = {context: score for context, score in zip(contexts_set, p_scores.astype(dtype))}
+    persuasion_scores: List[float] = [context_to_pscore[context] for context in contexts]  # shape: (len(contexts),)
+    return persuasion_scores
+
+
+def compute_sus_and_persuasion_scores(
     query: str,
     entity: str,
     contexts: List[str],
@@ -454,19 +464,12 @@ def estimate_cmi(
         prob_x_y_given_e * np.nan_to_num(np.log(prob_y_given_context_and_entity / prob_y_given_e))
     )  # shape: ()
 
-    # Two possible views of persuasion score: should it be H(Y | q[e]) - H(Y | X=x, q[e]) OR \sum_{y \in Y} p(y | X=x, q[e]) * log(p(y | X=x, q[e])/p(y | q[e]))?
-    persuasion_scores_ent_diff = p_score_ent_diff(prob_y_given_e, prob_y_given_context_and_entity)  # shape: (|X|,)
     persuasion_scores_kl = p_score_kl(prob_y_given_e, prob_y_given_context_and_entity)  # shape: (|X|,)
+    persuasion_scores_kl: List[float] = p_scores_per_context(
+        persuasion_scores_kl, contexts_set=contexts_set, contexts=contexts
+    )
 
-    def p_scores_per_context(p_scores, dtype=np.float64):
-        context_to_pscore = {context: score for context, score in zip(contexts_set, p_scores.astype(dtype))}
-        persuasion_scores: List[float] = [context_to_pscore[context] for context in contexts]  # shape: (len(contexts),)
-        return persuasion_scores
-
-    persuasion_scores_ent_diff = p_scores_per_context(persuasion_scores_ent_diff)
-    persuasion_scores_kl = p_scores_per_context(persuasion_scores_kl)
-
-    return sus_score, persuasion_scores_ent_diff, persuasion_scores_kl
+    return sus_score, persuasion_scores_kl
 
 
 def compute_memorization_ratio(
@@ -560,15 +563,7 @@ def difference_p_good_only(p, q):
 
 def estimate_entity_score(query, entity, contexts, model, tokenizer, distance_metric=kl_div, answer_map=None):
     """
-    Computes the conditional mutual information I(X; Y | q[e]) of answer Y and context X when conditioned on query regarding entity e.
-
-    I(X; Y | q[e]) = \sum_{x \in X} \sum_{y \in Y} (p(x, y | q[e]) * log(p(y | x, q[e]) / p(y | q[e]))) # noqa: W605
-
-    So we need to monte carlo estimate:
-        (1) p(y | x, q[e])                                             , shape: (|X|, |Y|)
-        (2) p(x | q[e])                                                , shape: (|X|,)
-        (3) p(x, y | q[e]) = p(y | x, q[e]) * p(x | q[e])              , shape: (|X|, |Y|)
-        (4) p(y | q[e]) = \sum_{x \in X} (p(y | x, q[e]) * p(x | q[e])), shape: (|Y|,) # noqa: W605
+    Approximates the susceptibility score for the given entity by approximating p(y | q[e]) with the answer distribution when no context is prepended.
     """
     if tokenizer.padding_side != "left":
         raise ValueError(
@@ -603,27 +598,3 @@ def estimate_entity_score(query, entity, contexts, model, tokenizer, distance_me
     )  # shape: (len(contexts),)
 
     return np.dot(distance_with_context, prob_x_given_e)
-
-
-# if __name__ == "__main__":
-#     query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-#     entity = "The Dark Knight"
-#     contexts = [
-#         "Here's a movie review: 'The movie was terrific and I loved it'.",
-#         "Here's a movie review: 'The movie was awful and I hated it'.",
-#     ]
-#     device = "cuda" if torch.cuda.is_available() else "cpu"
-#     model_name = "EleutherAI/pythia-70m-deduped"
-
-#     model = GPTNeoXForCausalLM.from_pretrained(
-#         model_name,
-#     ).to(device)
-
-#     tokenizer = AutoTokenizer.from_pretrained(
-#         model_name,
-#         padding_side="left",
-#     )
-
-#     query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-#     print(estimate_cmi(query, entity, contexts, model, tokenizer))
-#     print(estimate_entity_score(query, entity, contexts, model, tokenizer, distance_metric=kl_div, answer_map=None))

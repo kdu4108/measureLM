@@ -3,15 +3,6 @@ import numpy as np
 import torch
 import unittest as ut
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from measuring.estimate_probs import (
-    estimate_prob_y_given_context_and_entity,
-    estimate_prob_x_given_e,
-    estimate_prob_next_word_given_x_and_entity,
-    estimate_cmi,
-    score_model_for_next_word_prob,
-    create_position_ids_from_input_ids,
-    sharded_score_model,
-)
 
 
 class TestFormatQuery(ut.TestCase):
