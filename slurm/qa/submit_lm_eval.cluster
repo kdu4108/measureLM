@@ -1,9 +1,6 @@
 #!/bin/bash
 
 # Job details
-NUM_CPUS=1  # Number of cores (default: 1)
-# OUTFILE=submit_susceptibility_score_$1_$2_$3_$4_$5_$6_$7_$8_$9_${10}.out  # default: lsf.oJOBID
-# ERRORFILE=submit_susceptibility_score_$1_$2_$3_$4_$5_$6_$7_$8_$9_${10}.e
 script=slurm/qa/lm_eval.sh
 
 # Submit job

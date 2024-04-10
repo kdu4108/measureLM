@@ -6,51 +6,74 @@ from transformers import AutoTokenizer
 
 
 RUN_LOCALLY = False
-RAW_DATA_PATH = "data/FriendEnemy/raw-friend-enemy.csv"
+YAGO_QEC_PATH = "data/YagoECQ/yago_qec.json"  # assuming you are running from the root project directory
+with open(YAGO_QEC_PATH) as f:
+    yago_qec = json.load(f)
 
-# dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-dataset_names_and_rdps = [("FriendEnemy", RAW_DATA_PATH)]
-seeds = [11]
+dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
+seeds = [14]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
     max_contexts = [10]
     max_entities = [5]
+    query_ids = list(yago_qec.keys())[:5]
 else:
-    model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", False)]
-    # model_id_and_quantize_tuples = [("meta-llama/Llama-2-7b-hf", False), ("meta-llama/Llama-2-7b-chat-hf", False)]
-    max_contexts = [803]
-    max_entities = [73]
-    query_ids = [None]
+    model_id_and_quantize_tuples = [
+        ("EleutherAI/pythia-70m-deduped", False, 32),
+        ("EleutherAI/pythia-410m-deduped", False, 32),
+        ("EleutherAI/pythia-1.4b-deduped", False, 32),
+        ("EleutherAI/pythia-2.8b-deduped", False, 16),
+        ("EleutherAI/pythia-6.9b-deduped", False, 8),
+        ("EleutherAI/pythia-12b-deduped", True, 8),
+    ]
+    max_contexts = [600]
+    max_entities = [100]
+    query_ids = list(yago_qec.keys())
 
+# ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree", "random_sample"]
+ent_selection_fns = ["top_entity_uri_degree"]
 # ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree"]
-ent_selection_fns = ["random_sample"]
+# ent_selection_fns = ["random_sample"]
 
-# entity_types = json.dumps(
-#     ["entities", "fake_entities"], separators=(",", ":")
-# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 entity_types = json.dumps(
     ["entities", "gpt_fake_entities"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["my_famous_entities", "my_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["my_famous_entities", "gpt_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["entities", "my_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
+# entity_types = json.dumps(
+#     ["entities", "gpt_fake_entities", "my_famous_entities", "my_fake_entities"], separators=(",", ":")
+# )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+
 # query_types = json.dumps(
 #     ["closed", "open"], separators=(",", ":")
 # )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
 query_types = json.dumps(
     ["closed", "open"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
-context_types = json.dumps(["base"], separators=(",", ":"))
-
+context_types = json.dumps(["assertive", "base", "negation"], separators=(",", ":"))
 answer_map = dict()
 # answer_map = {0: [" No", " no", " NO", "No", "no", "NO"], 1: [" Yes", " yes", " YES", "Yes", "yes", "YES"]}
 
 cap_per_type = False
 ablate = False
-deduplicate_entities = False
-uniform_contexts = False
-overwrite = True
+deduplicate_entities = True
+uniform_contexts = True
+overwrite = False
 
 compute_mr = False
-batch_sz = 16
+# batch_sz = 8
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:
@@ -82,7 +105,7 @@ def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]
 
 for ds, rdp in dataset_names_and_rdps:
     for seed in seeds:
-        for model_id, do_quantize in model_id_and_quantize_tuples:
+        for model_id, do_quantize, bs in model_id_and_quantize_tuples:
             answer_map_in_tokens = convert_answer_map_to_tokens(model_id, answer_map)
             for qid in query_ids:
                 for mc in max_contexts:
@@ -92,7 +115,7 @@ for ds, rdp in dataset_names_and_rdps:
                                 subprocess.run(
                                     [
                                         "python",
-                                        "susceptibility_scores.py",
+                                        "main.py",
                                         f"{ds}",
                                         "-P",
                                         rdp,
@@ -117,7 +140,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         "-ES",
                                         f"{es}",
                                         "-BS",
-                                        f"{batch_sz}",
+                                        f"{bs}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])
@@ -131,7 +154,7 @@ for ds, rdp in dataset_names_and_rdps:
                                 cmd = (
                                     [
                                         "sbatch",
-                                        "slurm/susceptibility_scores/submit_susceptibility_score.cluster",
+                                        "slurm/susceptibility_scores/submit_main.cluster",
                                         f"{ds}",
                                         f"{rdp}",
                                         f"{seed}",
@@ -144,7 +167,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{context_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
-                                        f"{batch_sz}",
+                                        f"{bs}",
                                     ]
                                     + (["-B"] if do_quantize else [])
                                     + (["-A"] if ablate else [])

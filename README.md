@@ -56,7 +56,7 @@ tokenizer = AutoTokenizer.from_pretrained(
 )
 
 query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-susceptibility_score, _, persuasion_scores = estimate_cmi(query, entity, contexts, model, tokenizer)
+susceptibility_score, persuasion_scores = estimate_cmi(query, entity, contexts, model, tokenizer)
 print(f"Susceptibility score for entity '{entity}': {susceptibility_score}.")
 print(f"Persuasion scores for each context for entity '{entity}':")
 for i, context in enumerate(contexts):
@@ -64,7 +64,7 @@ for i, context in enumerate(contexts):
 ```
 
 ## Running experiments from the paper
-Here are the steps to regenerate the experiments in the paper. The key steps are (1) accessing or regenerating the dataset and (2) running the main entry point, `susceptibility_scores.py`.
+Here are the steps to regenerate the experiments in the paper. The key steps are (1) accessing or regenerating the dataset and (2) running the main entry point, `main.py`.
 
 ### Accessing the dataset
 #### Downloading the data (recommended)
@@ -76,29 +76,29 @@ This file consists of, for each of the 125 relevant relations from the YAGO know
 Alternatively, if you wish to reproduce the data, run all cells in `yago_generate_qec.ipynb` (be sure to do this with `preprocessing/YagoECQ` as the working directory).
 
 ### Running a single experiment
-The main entry point to run a single experiment is `susceptibility_scores.py`. The most important arguments to this script are:
+The main entry point to run a single experiment is `main.py`. The most important arguments to this script are:
 * `DATASET_NAME` (positional argument, determines which dataset to run the experiment on. Must exactly match the name of a dataset defined in `preprocessing/datasets.py`).
 * `--RAW_DATA_PATH` (the raw data corresponding to `DATASET_NAME`.)
 * `--MODEL_ID` (the model name in huggingface)
 * `--MAX_CONTEXTS` (the number of contexts to use)
 * `--MAX_ENTITIES` (the number of entities to use)
 
-The remaining arguments (visible via `python susceptibility_scores.py --help`) are either dataset-specific (e.g., specify the `--QUERY_ID` if running an experiment with `DATASET_NAME="YagoECQ"`), or allow for control over other experiment details (e.g., which query types to use, the model's batch size for inference, how to sample entities, etc.).
+The remaining arguments (visible via `python main.py --help`) are either dataset-specific (e.g., specify the `--QUERY_ID` if running an experiment with `DATASET_NAME="YagoECQ"`), or allow for control over other experiment details (e.g., which query types to use, the model's batch size for inference, how to sample entities, etc.).
 
 An example command is:
 ```
-python susceptibility_scores.py YagoECQ -Q http://schema.org/leader -M EleutherAI/pythia-70m-deduped -ET '["entities", "gpt_fake_entities"]' -QT '["open"]' -ME 100 -MC 500 -CT '["base"]' -U -D -ES top_entity_uri_degree
+python main.py YagoECQ -Q http://schema.org/leader -M EleutherAI/pythia-70m-deduped -ET '["entities", "gpt_fake_entities"]' -QT '["open"]' -ME 100 -MC 500 -CT '["base"]' -U -D -ES top_entity_uri_degree
 ```
 
 ### Running the full suite of experiments
 If you have access to a slurm cluster, you can kick off the full suite of Yago experiments via
 ```
-python slurm/susceptibility_scores/batch_submit_susceptibility_scores.py
+python slurm/susceptibility_scores/batch_submit_main.py
 ```
 
 Friend-enemy experiments can be run via
 ```
-python slurm/susceptibility_scores/batch_submit_susceptibility_scores-friendenemy.py
+python slurm/susceptibility_scores/batch_submit_main-friendenemy.py
 ```
 
 ## Testing

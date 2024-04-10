@@ -5,32 +5,26 @@ from typing import List, Dict
 from transformers import AutoTokenizer
 
 
-RUN_LOCALLY = True
-YAGO_QEC_PATH = "data/YagoECQ/yago_qec.json"  # assuming you are running from the root project directory
-COUNTRY_CAPITAL_PATH = "data/CountryCapital/yago-real-gpt-fake-country-capital.csv"
-with open(YAGO_QEC_PATH) as f:
-    yago_qec = json.load(f)
+RUN_LOCALLY = False
+RAW_DATA_PATH = "data/FriendEnemy/raw-friend-enemy.csv"
 
 # dataset_names_and_rdps = [("YagoECQ", YAGO_QEC_PATH)]
-dataset_names_and_rdps = [("CountryCapital", COUNTRY_CAPITAL_PATH)]
-seeds = [2]
+dataset_names_and_rdps = [("FriendEnemy", RAW_DATA_PATH)]
+seeds = [11]
 
 if RUN_LOCALLY:
     model_id_and_quantize_tuples = [("EleutherAI/pythia-70m-deduped", False)]
     max_contexts = [10]
     max_entities = [5]
-    query_ids = list(yago_qec.keys())[:5]
 else:
-    model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", True)]
-    max_contexts = [450]
-    max_entities = [90]
-    # query_ids = list(yago_qec.keys())
-    # query_ids = ["http://yago-knowledge.org/resource/capital", "reverse-http://yago-knowledge.org/resource/capital"]
-    # query_ids = ["http://schema.org/founder"]
+    model_id_and_quantize_tuples = [("EleutherAI/pythia-6.9b-deduped", False)]
+    # model_id_and_quantize_tuples = [("meta-llama/Llama-2-7b-hf", False), ("meta-llama/Llama-2-7b-chat-hf", False)]
+    max_contexts = [803]
+    max_entities = [73]
     query_ids = [None]
 
-ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree"]
-# ent_selection_fns = ["random_sample"]
+# ent_selection_fns = ["top_entity_uri_degree", "top_entity_namesake_degree"]
+ent_selection_fns = ["random_sample"]
 
 # entity_types = json.dumps(
 #     ["entities", "fake_entities"], separators=(",", ":")
@@ -44,18 +38,19 @@ entity_types = json.dumps(
 query_types = json.dumps(
     ["closed", "open"], separators=(",", ":")
 )  # separators is important to remove spaces from the string. This is important downstream for bash to be able to read the whole list.
+context_types = json.dumps(["base"], separators=(",", ":"))
 
 answer_map = dict()
 # answer_map = {0: [" No", " no", " NO", "No", "no", "NO"], 1: [" Yes", " yes", " YES", "Yes", "yes", "YES"]}
 
-cap_per_type = True
+cap_per_type = False
 ablate = False
 deduplicate_entities = False
 uniform_contexts = False
 overwrite = True
 
 compute_mr = False
-batch_sz = 32
+batch_sz = 16
 
 
 def convert_answer_map_to_tokens(model_id: str, answer_map: Dict[int, List[str]]) -> str:
@@ -97,7 +92,7 @@ for ds, rdp in dataset_names_and_rdps:
                                 subprocess.run(
                                     [
                                         "python",
-                                        "susceptibility_scores.py",
+                                        "main.py",
                                         f"{ds}",
                                         "-P",
                                         rdp,
@@ -115,6 +110,8 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{entity_types}",
                                         "-QT",
                                         f"{query_types}",
+                                        "-CT",
+                                        f"{context_types}",
                                         "-AM",
                                         f"{answer_map_in_tokens}",
                                         "-ES",
@@ -127,13 +124,14 @@ for ds, rdp in dataset_names_and_rdps:
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-MR"] if compute_mr else [])
                                     + (["-O"] if overwrite else [])
                                 )
                             else:
                                 cmd = (
                                     [
                                         "sbatch",
-                                        "slurm/susceptibility_scores/submit_susceptibility_score.cluster",
+                                        "slurm/susceptibility_scores/submit_main.cluster",
                                         f"{ds}",
                                         f"{rdp}",
                                         f"{seed}",
@@ -143,6 +141,7 @@ for ds, rdp in dataset_names_and_rdps:
                                         f"{me}",
                                         f"{entity_types}",
                                         f"{query_types}",
+                                        f"{context_types}",
                                         f"{answer_map_in_tokens}",
                                         f"{es}",
                                         f"{batch_sz}",
@@ -152,6 +151,7 @@ for ds, rdp in dataset_names_and_rdps:
                                     + (["-T"] if cap_per_type else [])
                                     + (["-D"] if deduplicate_entities else [])
                                     + (["-U"] if uniform_contexts else [])
+                                    + (["-MR"] if compute_mr else [])
                                     + (["-O"] if overwrite else [])
                                 )
                                 print(cmd)
