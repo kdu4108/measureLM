@@ -29,7 +29,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from measuring.estimate_probs import estimate_cmi
 
 query = "On a scale from 1 to 5 stars, the quality of this movie, '{}', is rated "
-entity = "The Dark Knight"
+entity = ("The Dark Knight",)
 contexts = [
     "Here's a movie review: 'The movie was the greatest.'",
     "Here's a movie review: 'The movie was great.'",
