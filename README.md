@@ -1,4 +1,4 @@
-# Persuasiveness and Susceptibility in In-Context Learning
+# Context vs Prior Knowledge in Language Models
 
 ## Getting started
 
